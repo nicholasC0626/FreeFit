@@ -1292,7 +1292,7 @@ Build in this order:
 **Before touching this project**, spend 1-2 weeks on these fundamentals. Do them in this exact order:
 
 #### Week 1: JavaScript & TypeScript Fundamentals
-1. **JavaScript basics** — [javascript.info](https://javascript.info) (Chapters 1-6)
+1. **JavaScript basics** — [javascript.info](https://javascript.info) (Chapters 1-6) ### Currently on Chapter 2.8
    - Variables, types, functions, arrays, objects
    - Promises and async/await (critical — every API call uses this)
    - Array methods: `.map()`, `.filter()`, `.reduce()`, `.find()`
