@@ -1068,13 +1068,13 @@ This is the most important section. **Follow this order exactly.** Each phase bu
 
 ### Phase 0: Environment Setup (Day 1)
 
-- [ ] Install Node.js 20 LTS from [nodejs.org](https://nodejs.org)
-- [ ] Install VS Code or Cursor (you already have this)
-- [ ] Install Git from [git-scm.com](https://git-scm.com)
-- [ ] Install PostgreSQL from [postgresql.org](https://postgresql.org) OR use Docker: `docker run -p 5432:5432 -e POSTGRES_PASSWORD=password postgres:16`
-- [ ] Install Expo Go on your phone (App Store / Google Play)
-- [ ] Create accounts: GitHub, Expo (expo.dev), OpenAI (platform.openai.com), USDA API key (fdc.nal.usda.gov/api-key-signup.html)
-- [ ] Create GitHub repository: `git init && git remote add origin <url>`
+- [X ] Install Node.js 20 LTS from [nodejs.org](https://nodejs.org)
+- [X ] Install VS Code or Cursor (you already have this)
+- [X] Install Git from [git-scm.com](https://git-scm.com)
+- [X ] Install PostgreSQL from [postgresql.org](https://postgresql.org) OR use Docker: `docker run -p 5432:5432 -e POSTGRES_PASSWORD=password postgres:16`
+- [X ] Install Expo Go on your phone (App Store / Google Play)
+- [X ] Create accounts: GitHub, Expo (expo.dev), OpenAI (platform.openai.com), USDA API key (fdc.nal.usda.gov/api-key-signup.html)
+- [ X] Create GitHub repository: `git init && git remote add origin <url>`
 
 ```bash
 # Verify installations
@@ -1104,7 +1104,8 @@ npx prisma init
 2. Create the Prisma schema (copy from Section 5 above)
 3. Run `npx prisma migrate dev --name init` to create tables
 4. Build these files in order:
-   - `src/config/env.ts` — load and validate env vars
+   - `src/config/env.ts` — load and validate env vars 
+   # need to add JWT_SECRET JWT_REFRESH_SECRET and etc
    - `src/config/database.ts` — Prisma client singleton
    - `src/index.ts` — Express app with middleware
    - `src/middleware/error.middleware.ts` — global error handler

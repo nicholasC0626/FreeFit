@@ -1,0 +1,236 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── USERS ───────────────────────────────────────────────
+
+model User {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  passwordHash      String
+  firstName         String
+  lastName          String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  profile           UserProfile?
+  foodLogs          FoodLog[]
+  workoutSessions   WorkoutSession[]
+  programs          Program[]
+  notifications     NotificationPreference?
+  expoPushToken     String?
+}
+
+model UserProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id])
+
+  heightCm          Float
+  weightKg          Float
+  age               Int
+  sex               Sex
+  activityLevel     ActivityLevel
+  goal              FitnessGoal
+  experienceLevel   ExperienceLevel
+
+  calorieTarget     Int
+  proteinTarget     Int
+  carbTarget        Int
+  fatTarget         Int
+
+  preferredUnit     Unit     @default(METRIC)
+  gymDaysPerWeek    Int      @default(4)
+
+  updatedAt         DateTime @updatedAt
+}
+
+enum Sex {
+  MALE
+  FEMALE
+}
+
+enum ActivityLevel {
+  SEDENTARY
+  LIGHTLY_ACTIVE
+  MODERATELY_ACTIVE
+  VERY_ACTIVE
+  EXTREMELY_ACTIVE
+}
+
+enum FitnessGoal {
+  LOSE_FAT
+  MAINTAIN
+  BUILD_MUSCLE
+}
+
+enum ExperienceLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum Unit {
+  METRIC
+  IMPERIAL
+}
+
+// ─── NUTRITION ───────────────────────────────────────────
+
+model FoodLog {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id])
+
+  date              DateTime @db.Date
+  mealType          MealType
+  foodName          String
+  brand             String?
+  barcode           String?
+
+  servingSize       String
+  servings          Float
+  calories          Int
+  protein           Float
+  carbs             Float
+  fat               Float
+  fiber             Float?
+  sugar             Float?
+  sodium            Float?
+
+  createdAt         DateTime @default(now())
+
+  @@index([userId, date])
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACK
+}
+
+model FastFoodItem {
+  id                String   @id @default(cuid())
+  restaurant        String
+  itemName          String
+  calories          Int
+  protein           Float
+  carbs             Float
+  fat               Float
+  servingSize       String
+  category          String
+
+  @@index([restaurant])
+}
+
+// ─── TRAINING ────────────────────────────────────────────
+
+model Program {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id])
+
+  name              String
+  description       String?
+  isActive          Boolean  @default(true)
+  isAiGenerated     Boolean  @default(false)
+  createdAt         DateTime @default(now())
+
+  workoutTemplates  WorkoutTemplate[]
+}
+
+model WorkoutTemplate {
+  id                String   @id @default(cuid())
+  programId         String
+  program           Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+
+  name              String
+  dayOfWeek         Int?
+  order             Int
+
+  exercises         ExerciseTemplate[]
+  sessions          WorkoutSession[]
+}
+
+model ExerciseTemplate {
+  id                  String   @id @default(cuid())
+  workoutTemplateId   String
+  workoutTemplate     WorkoutTemplate @relation(fields: [workoutTemplateId], references: [id], onDelete: Cascade)
+
+  exerciseName        String
+  muscleGroup         String
+  sets                Int
+  repRangeMin         Int
+  repRangeMax         Int
+  restSeconds         Int      @default(120)
+  notes               String?
+  order               Int
+}
+
+model WorkoutSession {
+  id                  String   @id @default(cuid())
+  userId              String
+  user                User     @relation(fields: [userId], references: [id])
+  workoutTemplateId   String?
+  workoutTemplate     WorkoutTemplate? @relation(fields: [workoutTemplateId], references: [id])
+
+  date                DateTime @db.Date
+  startedAt           DateTime
+  completedAt         DateTime?
+  notes               String?
+
+  exerciseLogs        ExerciseLog[]
+
+  @@index([userId, date])
+}
+
+model ExerciseLog {
+  id                  String   @id @default(cuid())
+  workoutSessionId    String
+  workoutSession      WorkoutSession @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade)
+
+  exerciseName        String
+  muscleGroup         String
+  order               Int
+
+  sets                SetLog[]
+}
+
+model SetLog {
+  id                  String   @id @default(cuid())
+  exerciseLogId       String
+  exerciseLog         ExerciseLog @relation(fields: [exerciseLogId], references: [id], onDelete: Cascade)
+
+  setNumber           Int
+  weight              Float
+  reps                Int
+  rpe                 Float?
+  setType             SetType  @default(WORKING)
+  isPersonalRecord    Boolean  @default(false)
+}
+
+enum SetType {
+  WARMUP
+  WORKING
+  DROP
+  FAILURE
+}
+
+// ─── NOTIFICATIONS ───────────────────────────────────────
+
+model NotificationPreference {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id])
+
+  workoutReminders      Boolean  @default(true)
+  nutritionReminders    Boolean  @default(true)
+  morningReminderTime   String   @default("08:00")
+  eveningReminderTime   String   @default("20:00")
+}
