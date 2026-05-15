@@ -3,6 +3,8 @@ import { useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { login } from "../../services/auth.service";
+import { getApiErrorMessage } from "../../utils/api-error";
+import { validateEmail } from "../../utils/auth-validation";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -13,6 +15,16 @@ export default function LoginScreen() {
 
   const handleLogin = async (): Promise<void> => {
     setErrorMessage(null);
+    const emailError = validateEmail(email);
+    if (emailError) {
+      setErrorMessage(emailError);
+      return;
+    }
+    if (!password) {
+      setErrorMessage("Password is required");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await login({
@@ -20,8 +32,8 @@ export default function LoginScreen() {
         password,
       });
       router.replace("/(tabs)/nutrition");
-    } catch {
-      setErrorMessage("Login failed. Check your email and password.");
+    } catch (error) {
+      setErrorMessage(getApiErrorMessage(error, "Login failed. Check your email and password."));
     } finally {
       setIsSubmitting(false);
     }

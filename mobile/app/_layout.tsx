@@ -8,6 +8,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '../components/useColorScheme';
 import { useAuthStore } from '../stores/auth.store';
+import { getProfile } from '../services/user.service';
 
 export {
   ErrorBoundary,
@@ -67,6 +68,17 @@ function ProtectedRouteGuard() {
   const router = useRouter();
   const isHydrated = useAuthStore((state) => state.isHydrated);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const hasProfile = useAuthStore((state) => state.hasProfile);
+
+  useEffect(() => {
+    if (!isHydrated || !isAuthenticated || hasProfile) {
+      return;
+    }
+
+    void getProfile().catch(() => {
+      useAuthStore.getState().setHasProfile(false);
+    });
+  }, [hasProfile, isAuthenticated, isHydrated]);
 
   useEffect(() => {
     if (!isHydrated) {
@@ -74,16 +86,30 @@ function ProtectedRouteGuard() {
     }
 
     const inAuthGroup = segments[0] === '(auth)';
+    const inOnboardingRoute = segments[0] === "(auth)" && segments[1] === "onboarding";
+    const inTabsGroup = segments[0] === '(tabs)';
 
     if (!isAuthenticated && !inAuthGroup) {
       router.replace('/(auth)/login');
-    } else if (isAuthenticated && inAuthGroup) {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      return;
+    }
+
+    if (!hasProfile && !inOnboardingRoute) {
+      router.replace('/(auth)/onboarding');
+      return;
+    }
+
+    if (hasProfile && (inAuthGroup || inOnboardingRoute || !inTabsGroup)) {
       router.replace('/(tabs)/nutrition');
     }
     // Intentionally exclude `router` from deps; it is a stable instance
     // and including it triggers an infinite redirect loop on web.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, isHydrated, segments]);
+  }, [hasProfile, isAuthenticated, isHydrated, segments]);
 
   return null;
 }

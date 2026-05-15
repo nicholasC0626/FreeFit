@@ -3,6 +3,8 @@ import { useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { register } from "../../services/auth.service";
+import { getApiErrorMessage } from "../../utils/api-error";
+import { validateEmail, validateName, validatePassword } from "../../utils/auth-validation";
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -15,6 +17,30 @@ export default function RegisterScreen() {
 
   const handleRegister = async (): Promise<void> => {
     setErrorMessage(null);
+    const firstNameError = validateName("First name", firstName);
+    if (firstNameError) {
+      setErrorMessage(firstNameError);
+      return;
+    }
+
+    const lastNameError = validateName("Last name", lastName);
+    if (lastNameError) {
+      setErrorMessage(lastNameError);
+      return;
+    }
+
+    const emailError = validateEmail(email);
+    if (emailError) {
+      setErrorMessage(emailError);
+      return;
+    }
+
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      setErrorMessage(passwordError);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await register({
@@ -24,8 +50,8 @@ export default function RegisterScreen() {
         password,
       });
       router.replace("/(tabs)/nutrition");
-    } catch {
-      setErrorMessage("Registration failed. Check your inputs and try again.");
+    } catch (error) {
+      setErrorMessage(getApiErrorMessage(error, "Registration failed. Check your inputs and try again."));
     } finally {
       setIsSubmitting(false);
     }
@@ -53,7 +79,7 @@ export default function RegisterScreen() {
       <TextInput
         autoCapitalize="none"
         onChangeText={setPassword}
-        placeholder="Password"
+        placeholder="Password (8+ chars, upper/lower/number/symbol)"
         secureTextEntry
         style={styles.input}
         value={password}

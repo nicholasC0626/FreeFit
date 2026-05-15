@@ -7,6 +7,7 @@ import { env } from "./config/env";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware";
 import { requireAuth, type AuthenticatedRequest } from "./middleware/auth.middleware";
 import { authRouter } from "./routes/auth.routes";
+import { userRouter } from "./routes/user.routes";
 
 const app = express();
 
@@ -44,6 +45,7 @@ app.get("/", (_req, res) => {
 });
 
 app.use("/api/auth", authRouter);
+app.use("/api/user", userRouter);
 
 app.get("/api/protected/ping", requireAuth, (req, res) => {
   const authReq = req as AuthenticatedRequest;

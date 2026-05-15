@@ -1,4 +1,4 @@
-import axios, { AxiosHeaders } from "axios";
+import axios from "axios";
 import Constants from "expo-constants";
 
 import { useAuthStore } from "../stores/auth.store";
@@ -30,13 +30,14 @@ export const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const accessToken = useAuthStore.getState().accessToken;
-  if (!accessToken) {
-    return config;
+  if (accessToken) {
+    if (config.headers && typeof config.headers.set === "function") {
+      config.headers.set("Authorization", `Bearer ${accessToken}`);
+    } else {
+      config.headers = config.headers ?? {};
+      (config.headers as Record<string, string>)["Authorization"] = `Bearer ${accessToken}`;
+    }
   }
-
-  const headers = AxiosHeaders.from(config.headers);
-  headers.set("Authorization", `Bearer ${accessToken}`);
-  config.headers = headers;
 
   return config;
 });
@@ -44,7 +45,10 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401) {
+    const requestUrl: string = error.config?.url ?? "";
+    const isAuthEndpoint = requestUrl.includes("/api/auth/");
+
+    if (error.response?.status === 401 && isAuthEndpoint) {
       await useAuthStore.getState().clearSession();
     }
 
