@@ -6,7 +6,10 @@ import helmet from "helmet";
 import { env } from "./config/env";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware";
 import { requireAuth, type AuthenticatedRequest } from "./middleware/auth.middleware";
+import { aiRouter } from "./routes/ai.routes";
 import { authRouter } from "./routes/auth.routes";
+import { nutritionRouter } from "./routes/nutrition.routes";
+import { trainingRouter } from "./routes/training.routes";
 import { userRouter } from "./routes/user.routes";
 
 const app = express();
@@ -46,6 +49,9 @@ app.get("/", (_req, res) => {
 
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
+app.use("/api/nutrition", nutritionRouter);
+app.use("/api/training", trainingRouter);
+app.use("/api/ai", aiRouter);
 
 app.get("/api/protected/ping", requireAuth, (req, res) => {
   const authReq = req as AuthenticatedRequest;

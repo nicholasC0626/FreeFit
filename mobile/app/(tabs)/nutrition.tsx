@@ -1,28 +1,436 @@
-import { StyleSheet, Text, View } from "react-native";
+import { useCallback, useState } from "react";
+import { useFocusEffect } from "expo-router";
+import {
+  ActivityIndicator,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
-export default function NutritionScreen() {
+import FoodLogModal from "../../components/FoodLogModal";
+import {
+  getDailySummary,
+  getFoodLogs,
+  type DailySummary,
+  type FoodLog,
+  type MealType,
+} from "../../services/nutrition.service";
+import { getApiErrorMessage } from "../../utils/api-error";
+
+const MEAL_SECTIONS: { type: MealType; label: string }[] = [
+  { type: "BREAKFAST", label: "Breakfast" },
+  { type: "LUNCH", label: "Lunch" },
+  { type: "DINNER", label: "Dinner" },
+  { type: "SNACK", label: "Snacks" },
+];
+
+const todayString = (): string => {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+};
+
+const shiftDate = (date: string, days: number): string => {
+  const d = new Date(`${date}T00:00:00`);
+  d.setDate(d.getDate() + days);
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${month}-${day}`;
+};
+
+const formatDateLabel = (date: string): string => {
+  if (date === todayString()) {
+    return "Today";
+  }
+  if (date === shiftDate(todayString(), -1)) {
+    return "Yesterday";
+  }
+  return new Date(`${date}T00:00:00`).toLocaleDateString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+};
+
+type MacroRowProps = {
+  label: string;
+  consumed: number;
+  target: number | null;
+  unit: string;
+  color: string;
+};
+
+function MacroRow({ label, consumed, target, unit, color }: MacroRowProps) {
+  const progress = target && target > 0 ? Math.min(consumed / target, 1) : 0;
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Nutrition</Text>
-      <Text style={styles.subtitle}>Daily log and macro summary will go here.</Text>
+    <View style={styles.macroRow}>
+      <View style={styles.macroHeader}>
+        <Text style={styles.macroLabel}>{label}</Text>
+        <Text style={styles.macroValue}>
+          {Math.round(consumed)}
+          {target !== null ? ` / ${Math.round(target)}` : ""} {unit}
+        </Text>
+      </View>
+      <View style={styles.progressTrack}>
+        <View style={[styles.progressFill, { width: `${progress * 100}%`, backgroundColor: color }]} />
+      </View>
     </View>
   );
 }
 
+function FoodLogRow({ log, onPress }: { log: FoodLog; onPress: () => void }) {
+  return (
+    <Pressable style={styles.foodRow} onPress={onPress}>
+      <View style={styles.foodInfo}>
+        <Text style={styles.foodName}>{log.foodName}</Text>
+        <Text style={styles.foodMeta}>
+          {log.servings} x {log.servingSize}
+          {log.brand ? ` - ${log.brand}` : ""}
+        </Text>
+      </View>
+      <View style={styles.foodMacros}>
+        <Text style={styles.foodCalories}>{log.calories} cal</Text>
+        <Text style={styles.foodMeta}>
+          P {Math.round(log.protein)} | C {Math.round(log.carbs)} | F {Math.round(log.fat)}
+        </Text>
+      </View>
+    </Pressable>
+  );
+}
+
+export default function NutritionScreen() {
+  const [summary, setSummary] = useState<DailySummary | null>(null);
+  const [logs, setLogs] = useState<FoodLog[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [modalMeal, setModalMeal] = useState<MealType | null>(null);
+  const [editingLog, setEditingLog] = useState<FoodLog | null>(null);
+  const [selectedDate, setSelectedDate] = useState(todayString());
+
+  const loadSummary = useCallback(
+    async (refreshing = false) => {
+      if (refreshing) {
+        setIsRefreshing(true);
+      }
+      setError(null);
+      try {
+        const [summaryData, logsData] = await Promise.all([
+          getDailySummary(selectedDate),
+          getFoodLogs(selectedDate),
+        ]);
+        setSummary(summaryData);
+        setLogs(logsData);
+      } catch (err) {
+        setError(getApiErrorMessage(err, "Could not load nutrition for this day."));
+      } finally {
+        setIsLoading(false);
+        setIsRefreshing(false);
+      }
+    },
+    [selectedDate],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadSummary();
+    }, [loadSummary]),
+  );
+
+  const closeModal = () => {
+    setModalMeal(null);
+    setEditingLog(null);
+  };
+
+  const handleSaved = () => {
+    closeModal();
+    void loadSummary();
+  };
+
+  if (isLoading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
+  const remainingCalories = summary?.remaining?.calories ?? null;
+
+  return (
+    <ScrollView
+      contentContainerStyle={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={isRefreshing} onRefresh={() => void loadSummary(true)} />
+      }
+    >
+      <View style={styles.dateNav}>
+        <Pressable style={styles.dateArrow} onPress={() => setSelectedDate(shiftDate(selectedDate, -1))}>
+          <Text style={styles.dateArrowText}>{"<"}</Text>
+        </Pressable>
+        <View style={styles.dateCenter}>
+          <Text style={styles.title}>{formatDateLabel(selectedDate)}</Text>
+          <Text style={styles.dateText}>{selectedDate}</Text>
+        </View>
+        <Pressable
+          style={[styles.dateArrow, selectedDate === todayString() && styles.dateArrowDisabled]}
+          onPress={() => setSelectedDate(shiftDate(selectedDate, 1))}
+          disabled={selectedDate === todayString()}
+        >
+          <Text style={styles.dateArrowText}>{">"}</Text>
+        </Pressable>
+      </View>
+
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+      {summary ? (
+        <>
+          <View style={styles.calorieCard}>
+            <Text style={styles.calorieNumber}>
+              {remainingCalories !== null ? Math.max(remainingCalories, 0) : summary.consumed.calories}
+            </Text>
+            <Text style={styles.calorieLabel}>
+              {remainingCalories !== null ? "calories remaining" : "calories eaten"}
+            </Text>
+            <Text style={styles.calorieSub}>
+              {summary.consumed.calories} eaten
+              {summary.targets ? ` of ${summary.targets.calories} target` : ""}
+            </Text>
+          </View>
+
+          <View style={styles.macroCard}>
+            <Text style={styles.cardTitle}>Macros</Text>
+            <MacroRow
+              label="Protein"
+              consumed={summary.consumed.protein}
+              target={summary.targets?.protein ?? null}
+              unit="g"
+              color="#ef4444"
+            />
+            <MacroRow
+              label="Carbs"
+              consumed={summary.consumed.carbs}
+              target={summary.targets?.carbs ?? null}
+              unit="g"
+              color="#f59e0b"
+            />
+            <MacroRow
+              label="Fat"
+              consumed={summary.consumed.fat}
+              target={summary.targets?.fat ?? null}
+              unit="g"
+              color="#3b82f6"
+            />
+          </View>
+
+          {MEAL_SECTIONS.map(({ type, label }) => {
+            const mealLogs = logs.filter((log) => log.mealType === type);
+            const mealCalories = mealLogs.reduce((total, log) => total + log.calories, 0);
+
+            return (
+              <View key={type} style={styles.mealCard}>
+                <View style={styles.mealHeader}>
+                  <Text style={styles.cardTitle}>{label}</Text>
+                  <Text style={styles.mealCalories}>{mealCalories} cal</Text>
+                </View>
+                {mealLogs.length === 0 ? (
+                  <Text style={styles.emptyMealText}>Nothing logged.</Text>
+                ) : (
+                  mealLogs.map((log) => (
+                    <FoodLogRow
+                      key={log.id}
+                      log={log}
+                      onPress={() => {
+                        setEditingLog(log);
+                        setModalMeal(log.mealType);
+                      }}
+                    />
+                  ))
+                )}
+                <Pressable style={styles.addButton} onPress={() => setModalMeal(type)}>
+                  <Text style={styles.addButtonText}>+ Add food</Text>
+                </Pressable>
+              </View>
+            );
+          })}
+        </>
+      ) : null}
+
+      <FoodLogModal
+        visible={modalMeal !== null}
+        mealType={modalMeal ?? "SNACK"}
+        date={selectedDate}
+        editingLog={editingLog}
+        onClose={closeModal}
+        onSaved={handleSaved}
+      />
+    </ScrollView>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: {
+  centered: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 20,
+  },
+  container: {
+    padding: 20,
+    paddingBottom: 40,
   },
   title: {
     fontSize: 26,
     fontWeight: "700",
+  },
+  dateText: {
+    color: "#6b7280",
+  },
+  dateNav: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  dateCenter: {
+    alignItems: "center",
+  },
+  dateArrow: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#f3f4f6",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dateArrowDisabled: {
+    opacity: 0.3,
+  },
+  dateArrowText: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#374151",
+  },
+  errorText: {
+    color: "#dc2626",
+    marginBottom: 12,
+  },
+  calorieCard: {
+    backgroundColor: "#111827",
+    borderRadius: 16,
+    padding: 24,
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  calorieNumber: {
+    color: "#ffffff",
+    fontSize: 44,
+    fontWeight: "800",
+  },
+  calorieLabel: {
+    color: "#9ca3af",
+    fontSize: 14,
+    marginTop: 2,
+  },
+  calorieSub: {
+    color: "#6b7280",
+    fontSize: 13,
+    marginTop: 8,
+  },
+  macroCard: {
+    backgroundColor: "#f9fafb",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 12,
+  },
+  macroRow: {
+    marginBottom: 12,
+  },
+  macroHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 4,
+  },
+  macroLabel: {
+    fontWeight: "600",
+  },
+  macroValue: {
+    color: "#6b7280",
+  },
+  progressTrack: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#e5e7eb",
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: 8,
+    borderRadius: 4,
+  },
+  mealCard: {
+    backgroundColor: "#f9fafb",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+  },
+  mealHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
   },
-  subtitle: {
-    textAlign: "center",
+  mealCalories: {
     color: "#6b7280",
+    fontWeight: "600",
+  },
+  emptyMealText: {
+    color: "#9ca3af",
+    fontSize: 13,
+  },
+  foodRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#e5e7eb",
+  },
+  foodInfo: {
+    flex: 1,
+    paddingRight: 8,
+  },
+  foodName: {
+    fontWeight: "600",
+  },
+  foodMeta: {
+    color: "#6b7280",
+    fontSize: 12,
+    marginTop: 2,
+  },
+  foodMacros: {
+    alignItems: "flex-end",
+  },
+  foodCalories: {
+    fontWeight: "600",
+  },
+  addButton: {
+    marginTop: 10,
+    paddingVertical: 8,
+    alignItems: "center",
+    borderRadius: 10,
+    backgroundColor: "#eef2ff",
+  },
+  addButtonText: {
+    color: "#4f46e5",
+    fontWeight: "700",
+    fontSize: 13,
   },
 });

@@ -12,6 +12,9 @@ const envSchema = z.object({
     .string()
     .min(16, "JWT_REFRESH_SECRET must be at least 16 chars"),
   OPENAI_API_KEY: z.string().min(1).optional(),
+  USDA_API_KEY: z.string().min(1).optional(),
+  GEMINI_API_KEY: z.string().min(1).optional(),
+  GEMINI_MODEL: z.string().min(1).default("gemini-3-flash-preview"),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

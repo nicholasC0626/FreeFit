@@ -57,6 +57,8 @@ function RootLayoutNav() {
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="training/program-editor" options={{ title: 'New Program' }} />
+        <Stack.Screen name="training/active-workout" options={{ title: 'Workout' }} />
       </Stack>
       <ProtectedRouteGuard />
     </ThemeProvider>
@@ -88,6 +90,7 @@ function ProtectedRouteGuard() {
     const inAuthGroup = segments[0] === '(auth)';
     const inOnboardingRoute = segments[0] === "(auth)" && segments[1] === "onboarding";
     const inTabsGroup = segments[0] === '(tabs)';
+    const inTrainingGroup = segments[0] === 'training';
 
     if (!isAuthenticated && !inAuthGroup) {
       router.replace('/(auth)/login');
@@ -103,7 +106,7 @@ function ProtectedRouteGuard() {
       return;
     }
 
-    if (hasProfile && (inAuthGroup || inOnboardingRoute || !inTabsGroup)) {
+    if (hasProfile && (inAuthGroup || inOnboardingRoute || (!inTabsGroup && !inTrainingGroup))) {
       router.replace('/(tabs)/nutrition');
     }
     // Intentionally exclude `router` from deps; it is a stable instance
