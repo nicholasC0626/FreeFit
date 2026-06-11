@@ -3,16 +3,21 @@ import type { Request, RequestHandler } from "express";
 import {
   createFoodLog,
   deleteFoodLog,
+  generateGroceryList,
   getDailySummary,
+  getFastFoodOptions,
   getFoodLogs,
+  getFoodSuggestions,
   updateFoodLog,
 } from "../services/nutrition.service";
 import { searchFoods } from "../services/food-api.service";
 import {
   dateQuerySchema,
+  fastFoodQuerySchema,
   searchQuerySchema,
   toLogDate,
   type CreateFoodLogInput,
+  type GroceryListInput,
   type UpdateFoodLogInput,
 } from "../validators/nutrition.validator";
 
@@ -56,6 +61,63 @@ export const searchFoodsHandler: RequestHandler = async (req, res, next) => {
 
     const results = await searchFoods(query.data.q);
     res.status(200).json({ results });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getSuggestionsHandler: RequestHandler = async (req, res, next) => {
+  try {
+    const userId = getUserId(req);
+    if (!userId) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const query = dateQuerySchema.safeParse(req.query);
+    if (!query.success) {
+      next(query.error);
+      return;
+    }
+
+    const result = await getFoodSuggestions(userId, toLogDate(query.data.date));
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getFastFoodHandler: RequestHandler = async (req, res, next) => {
+  try {
+    const userId = getUserId(req);
+    if (!userId) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const query = fastFoodQuerySchema.safeParse(req.query);
+    if (!query.success) {
+      next(query.error);
+      return;
+    }
+
+    const items = await getFastFoodOptions(query.data);
+    res.status(200).json({ items });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const groceryListHandler: RequestHandler = async (req, res, next) => {
+  try {
+    const userId = getUserId(req);
+    if (!userId) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const groceryList = await generateGroceryList(userId, req.body as GroceryListInput);
+    res.status(200).json({ groceryList });
   } catch (error) {
     next(error);
   }

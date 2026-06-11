@@ -5,11 +5,18 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   View,
 } from "react-native";
 
+import ErrorBanner from "../../components/ErrorBanner";
 import { logout } from "../../services/auth.service";
+import {
+  getNotificationPrefs,
+  updateNotificationPrefs,
+  type NotificationPrefs,
+} from "../../services/notification.service";
 import { getProfile, type UserProfileResponse } from "../../services/user.service";
 import { useAuthStore } from "../../stores/auth.store";
 import { getApiErrorMessage } from "../../utils/api-error";
@@ -55,6 +62,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 export default function ProfileScreen() {
   const user = useAuthStore((state) => state.user);
   const [profile, setProfile] = useState<UserProfileResponse | null>(null);
+  const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -64,12 +72,27 @@ export default function ProfileScreen() {
     try {
       const data = await getProfile();
       setProfile(data);
+      setPrefs(await getNotificationPrefs());
     } catch (err) {
       setError(getApiErrorMessage(err, "Could not load your profile."));
     } finally {
       setIsLoading(false);
     }
   }, []);
+
+  const togglePref = async (key: "workoutReminders" | "nutritionReminders", value: boolean) => {
+    if (!prefs) {
+      return;
+    }
+    const previous = prefs;
+    setPrefs({ ...prefs, [key]: value });
+    try {
+      setPrefs(await updateNotificationPrefs({ [key]: value }));
+    } catch (err) {
+      setPrefs(previous);
+      setError(getApiErrorMessage(err, "Could not update notification settings."));
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -108,7 +131,7 @@ export default function ProfileScreen() {
         <Text style={styles.email}>{user?.email ?? ""}</Text>
       </View>
 
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {error ? <ErrorBanner message={error} onRetry={() => void loadProfile()} /> : null}
 
       {profile ? (
         <>
@@ -144,6 +167,34 @@ export default function ProfileScreen() {
             <InfoRow label="Gym days / week" value={`${profile.gymDaysPerWeek}`} />
           </View>
         </>
+      ) : null}
+
+      {prefs ? (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Notifications</Text>
+          <View style={styles.switchRow}>
+            <View style={styles.switchLabelGroup}>
+              <Text style={styles.switchLabel}>Workout reminders</Text>
+              <Text style={styles.switchSub}>
+                {prefs.morningReminderTime} kickoff, follow-ups if you haven't trained
+              </Text>
+            </View>
+            <Switch
+              value={prefs.workoutReminders}
+              onValueChange={(value) => void togglePref("workoutReminders", value)}
+            />
+          </View>
+          <View style={styles.switchRow}>
+            <View style={styles.switchLabelGroup}>
+              <Text style={styles.switchLabel}>Nutrition reminders</Text>
+              <Text style={styles.switchSub}>A nudge if you forget to log your meals</Text>
+            </View>
+            <Switch
+              value={prefs.nutritionReminders}
+              onValueChange={(value) => void togglePref("nutritionReminders", value)}
+            />
+          </View>
+        </View>
       ) : null}
 
       <Pressable
@@ -211,6 +262,26 @@ const styles = StyleSheet.create({
   errorText: {
     color: "#dc2626",
     marginBottom: 12,
+  },
+  switchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#e5e7eb",
+  },
+  switchLabelGroup: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  switchLabel: {
+    fontWeight: "600",
+  },
+  switchSub: {
+    color: "#6b7280",
+    fontSize: 12,
+    marginTop: 2,
   },
   logoutButton: {
     borderWidth: 1,

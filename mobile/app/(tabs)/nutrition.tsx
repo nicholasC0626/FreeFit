@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import {
   ActivityIndicator,
   Pressable,
@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 
+import ErrorBanner from "../../components/ErrorBanner";
 import FoodLogModal from "../../components/FoodLogModal";
 import {
   getDailySummary,
@@ -104,6 +105,7 @@ function FoodLogRow({ log, onPress }: { log: FoodLog; onPress: () => void }) {
 }
 
 export default function NutritionScreen() {
+  const router = useRouter();
   const [summary, setSummary] = useState<DailySummary | null>(null);
   const [logs, setLogs] = useState<FoodLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -186,7 +188,7 @@ export default function NutritionScreen() {
         </Pressable>
       </View>
 
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {error ? <ErrorBanner message={error} onRetry={() => void loadSummary()} /> : null}
 
       {summary ? (
         <>
@@ -226,6 +228,18 @@ export default function NutritionScreen() {
               unit="g"
               color="#3b82f6"
             />
+          </View>
+
+          <View style={styles.toolRow}>
+            <Pressable style={styles.toolButton} onPress={() => router.push("/nutrition/meal-plan")}>
+              <Text style={styles.toolButtonText}>Meal ideas</Text>
+            </Pressable>
+            <Pressable style={styles.toolButton} onPress={() => router.push("/nutrition/fast-food")}>
+              <Text style={styles.toolButtonText}>Fast food</Text>
+            </Pressable>
+            <Pressable style={styles.toolButton} onPress={() => router.push("/nutrition/grocery-list")}>
+              <Text style={styles.toolButtonText}>Groceries</Text>
+            </Pressable>
           </View>
 
           {MEAL_SECTIONS.map(({ type, label }) => {
@@ -375,6 +389,24 @@ const styles = StyleSheet.create({
   progressFill: {
     height: 8,
     borderRadius: 4,
+  },
+  toolRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 16,
+  },
+  toolButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#4f46e5",
+    borderRadius: 10,
+    paddingVertical: 9,
+    alignItems: "center",
+  },
+  toolButtonText: {
+    color: "#4f46e5",
+    fontWeight: "700",
+    fontSize: 13,
   },
   mealCard: {
     backgroundColor: "#f9fafb",

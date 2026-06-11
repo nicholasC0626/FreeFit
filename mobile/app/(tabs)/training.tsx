@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 
+import ErrorBanner from "../../components/ErrorBanner";
 import {
   deleteProgram,
   listPrograms,
@@ -117,7 +118,7 @@ export default function TrainingScreen() {
     >
       <Text style={styles.title}>Training</Text>
 
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {error ? <ErrorBanner message={error} onRetry={() => void loadData()} /> : null}
 
       {activeSession ? (
         <Pressable

@@ -14,6 +14,21 @@ export const searchQuerySchema = z.object({
 
 export type DateQueryInput = z.infer<typeof dateQuerySchema>;
 
+export const fastFoodQuerySchema = z.object({
+  maxCalories: z.coerce.number().int().min(0).max(5000).optional(),
+  minProtein: z.coerce.number().int().min(0).max(300).optional(),
+  restaurant: z.string().trim().min(1).max(100).optional(),
+});
+
+export const groceryListSchema = z.object({
+  days: z.number().int().min(1).max(14).optional(),
+  budget: z.enum(["LOW", "MEDIUM", "HIGH"]).optional(),
+  dietaryRestrictions: z.string().trim().max(300).optional(),
+});
+
+export type FastFoodQueryInput = z.infer<typeof fastFoodQuerySchema>;
+export type GroceryListInput = z.infer<typeof groceryListSchema>;
+
 export const createFoodLogSchema = z.object({
   date: dateString.optional(),
   mealType: z.enum(["BREAKFAST", "LUNCH", "DINNER", "SNACK"]),

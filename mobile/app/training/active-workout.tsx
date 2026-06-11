@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import * as Haptics from "expo-haptics";
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -91,7 +93,10 @@ export default function ActiveWorkoutScreen() {
     setLoggingExerciseId(exerciseLogId);
     setError(null);
     try {
-      await logSet(session.id, exerciseLogId, { weight, reps });
+      const loggedSet = await logSet(session.id, exerciseLogId, { weight, reps });
+      if (loggedSet.isPersonalRecord && Platform.OS !== "web") {
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      }
       setSetDrafts((prev) => ({ ...prev, [exerciseLogId]: { weight: draft.weight, reps: "" } }));
       await loadSession();
     } catch (err) {

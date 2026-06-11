@@ -4,6 +4,7 @@ import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 
 import { env } from "./config/env";
+import { startNotificationScheduler } from "./jobs/notification-scheduler";
 import { errorHandler, notFoundHandler } from "./middleware/error.middleware";
 import { requireAuth, type AuthenticatedRequest } from "./middleware/auth.middleware";
 import { aiRouter } from "./routes/ai.routes";
@@ -61,7 +62,13 @@ app.get("/api/protected/ping", requireAuth, (req, res) => {
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-app.listen(env.PORT, () => {
-  // eslint-disable-next-line no-console
-  console.log(`Listening on http://localhost:${env.PORT}`);
-});
+export { app };
+
+// Only listen when run directly — integration tests import `app` instead.
+if (require.main === module) {
+  app.listen(env.PORT, () => {
+    // eslint-disable-next-line no-console
+    console.log(`Listening on http://localhost:${env.PORT}`);
+    startNotificationScheduler();
+  });
+}

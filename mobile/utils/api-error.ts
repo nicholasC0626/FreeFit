@@ -6,6 +6,9 @@ export const getApiErrorMessage = (error: unknown, fallbackMessage: string): str
   }
 
   if (!error.response) {
+    if (error.code === "ECONNABORTED" || error.message?.includes("timeout")) {
+      return "The request timed out. AI responses can take up to a minute — please try again.";
+    }
     return "Cannot reach backend API. Start server at http://localhost:3000.";
   }
 

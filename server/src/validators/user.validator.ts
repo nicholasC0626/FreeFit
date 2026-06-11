@@ -19,3 +19,21 @@ export const upsertProfileSchema = z.object({
 });
 
 export type UpsertProfileInput = z.infer<typeof upsertProfileSchema>;
+
+export const pushTokenSchema = z.object({
+  expoPushToken: z.string().trim().min(1, "expoPushToken is required").max(200),
+});
+
+const reminderTime = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Time must be in HH:MM format");
+
+export const notificationPrefsSchema = z.object({
+  workoutReminders: z.boolean().optional(),
+  nutritionReminders: z.boolean().optional(),
+  morningReminderTime: reminderTime.optional(),
+  eveningReminderTime: reminderTime.optional(),
+});
+
+export type PushTokenInput = z.infer<typeof pushTokenSchema>;
+export type NotificationPrefsInput = z.infer<typeof notificationPrefsSchema>;

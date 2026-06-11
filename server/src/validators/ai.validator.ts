@@ -15,5 +15,16 @@ export const generateProgramSchema = z.object({
   notes: z.string().trim().max(500).optional(),
 });
 
+export const reviewProgramSchema = z.object({
+  programId: z.string().trim().min(1, "programId is required"),
+});
+
+export const suggestExercisesSchema = z.object({
+  muscleGroup: z.string().trim().min(1, "muscleGroup is required").max(50),
+  equipment: z.string().trim().max(200).optional(),
+});
+
 export type ChatInput = z.infer<typeof chatSchema>;
 export type GenerateProgramInput = z.infer<typeof generateProgramSchema>;
+export type ReviewProgramInput = z.infer<typeof reviewProgramSchema>;
+export type SuggestExercisesInput = z.infer<typeof suggestExercisesSchema>;

@@ -59,6 +59,11 @@ function RootLayoutNav() {
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
         <Stack.Screen name="training/program-editor" options={{ title: 'New Program' }} />
         <Stack.Screen name="training/active-workout" options={{ title: 'Workout' }} />
+        <Stack.Screen name="ai/program-review" options={{ title: 'Program Review' }} />
+        <Stack.Screen name="ai/exercise-suggest" options={{ title: 'Exercise Ideas' }} />
+        <Stack.Screen name="nutrition/meal-plan" options={{ title: 'Meal Ideas' }} />
+        <Stack.Screen name="nutrition/fast-food" options={{ title: 'Fast Food' }} />
+        <Stack.Screen name="nutrition/grocery-list" options={{ title: 'Grocery List' }} />
       </Stack>
       <ProtectedRouteGuard />
     </ThemeProvider>
@@ -91,6 +96,8 @@ function ProtectedRouteGuard() {
     const inOnboardingRoute = segments[0] === "(auth)" && segments[1] === "onboarding";
     const inTabsGroup = segments[0] === '(tabs)';
     const inTrainingGroup = segments[0] === 'training';
+    const inAiGroup = segments[0] === 'ai';
+    const inNutritionGroup = segments[0] === 'nutrition';
 
     if (!isAuthenticated && !inAuthGroup) {
       router.replace('/(auth)/login');
@@ -106,7 +113,7 @@ function ProtectedRouteGuard() {
       return;
     }
 
-    if (hasProfile && (inAuthGroup || inOnboardingRoute || (!inTabsGroup && !inTrainingGroup))) {
+    if (hasProfile && (inAuthGroup || inOnboardingRoute || (!inTabsGroup && !inTrainingGroup && !inAiGroup && !inNutritionGroup))) {
       router.replace('/(tabs)/nutrition');
     }
     // Intentionally exclude `router` from deps; it is a stable instance

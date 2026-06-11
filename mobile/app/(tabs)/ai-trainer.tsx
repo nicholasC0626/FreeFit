@@ -89,6 +89,16 @@ export default function AiTrainerScreen() {
           )}
         </Pressable>
       </View>
+      <Text style={styles.subtitle}>AI replies may take 30–60 seconds</Text>
+
+      <View style={styles.toolRow}>
+        <Pressable style={styles.toolButton} onPress={() => router.push("/ai/program-review")}>
+          <Text style={styles.toolButtonText}>Review my program</Text>
+        </Pressable>
+        <Pressable style={styles.toolButton} onPress={() => router.push("/ai/exercise-suggest")}>
+          <Text style={styles.toolButtonText}>Exercise ideas</Text>
+        </Pressable>
+      </View>
 
       <ScrollView
         ref={scrollRef}
@@ -178,6 +188,31 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 26,
     fontWeight: "700",
+  },
+  subtitle: {
+    fontSize: 12,
+    color: "#6b7280",
+    paddingHorizontal: 20,
+    paddingBottom: 4,
+  },
+  toolRow: {
+    flexDirection: "row",
+    gap: 8,
+    paddingHorizontal: 20,
+    paddingBottom: 8,
+  },
+  toolButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#4f46e5",
+    borderRadius: 10,
+    paddingVertical: 8,
+    alignItems: "center",
+  },
+  toolButtonText: {
+    color: "#4f46e5",
+    fontWeight: "700",
+    fontSize: 13,
   },
   generateButton: {
     backgroundColor: "#4f46e5",

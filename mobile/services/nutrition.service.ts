@@ -115,3 +115,76 @@ export const deleteFoodLog = async (id: string): Promise<void> => {
     headers: authHeaders(),
   });
 };
+
+export type FoodSuggestion = {
+  name: string;
+  servingSize: string;
+  servings: number;
+  category: "PROTEIN" | "CARB" | "FAT" | "DAIRY" | "PRODUCE";
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+};
+
+export type SuggestionsResponse = {
+  date: string;
+  remaining: MacroSet | null;
+  suggestions: FoodSuggestion[];
+  message: string | null;
+};
+
+export const getFoodSuggestions = async (date?: string): Promise<SuggestionsResponse> => {
+  const { data } = await api.get<SuggestionsResponse>("/api/nutrition/suggestions", {
+    headers: authHeaders(),
+    params: date ? { date } : undefined,
+  });
+  return data;
+};
+
+export type FastFoodItem = {
+  id: string;
+  restaurant: string;
+  itemName: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  servingSize: string;
+  category: string;
+};
+
+export const getFastFoodOptions = async (filters: {
+  maxCalories?: number;
+  minProtein?: number;
+}): Promise<FastFoodItem[]> => {
+  const { data } = await api.get<{ items: FastFoodItem[] }>("/api/nutrition/fast-food", {
+    headers: authHeaders(),
+    params: filters,
+  });
+  return data.items;
+};
+
+export type GroceryList = {
+  sections: {
+    section: string;
+    items: { name: string; quantity: string; note?: string }[];
+  }[];
+  tips?: string[];
+};
+
+// Grocery generation goes through Gemini, so it needs the long AI timeout.
+const GROCERY_TIMEOUT_MS = 90_000;
+
+export const generateGroceryList = async (options: {
+  days?: number;
+  budget?: "LOW" | "MEDIUM" | "HIGH";
+  dietaryRestrictions?: string;
+}): Promise<GroceryList> => {
+  const { data } = await api.post<{ groceryList: GroceryList }>(
+    "/api/nutrition/grocery-list",
+    options,
+    { headers: authHeaders(), timeout: GROCERY_TIMEOUT_MS },
+  );
+  return data.groceryList;
+};
