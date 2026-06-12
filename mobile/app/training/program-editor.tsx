@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "expo-router";
 import {
   ActivityIndicator,
@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 
+import { useTheme, type Theme } from "../../constants/theme";
 import { createProgram, type NewExercise } from "../../services/training.service";
 import { getApiErrorMessage } from "../../utils/api-error";
 
@@ -46,6 +47,8 @@ const parsePositiveInt = (value: string): number | null => {
 
 export default function ProgramEditorScreen() {
   const router = useRouter();
+  const t = useTheme();
+  const styles = useMemo(() => createStyles(t), [t]);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [workouts, setWorkouts] = useState<WorkoutDraft[]>([emptyWorkout()]);
@@ -135,6 +138,7 @@ export default function ProgramEditorScreen() {
         value={name}
         onChangeText={setName}
         placeholder="e.g. Push Pull Legs"
+        placeholderTextColor={t.textFaint}
         editable={!isSaving}
       />
 
@@ -144,6 +148,7 @@ export default function ProgramEditorScreen() {
         value={description}
         onChangeText={setDescription}
         placeholder="e.g. 3-day hypertrophy split"
+        placeholderTextColor={t.textFaint}
         editable={!isSaving}
       />
 
@@ -166,6 +171,7 @@ export default function ProgramEditorScreen() {
             value={workout.name}
             onChangeText={(text) => updateWorkout(workoutIndex, { name: text })}
             placeholder="Workout name (e.g. Push Day)"
+            placeholderTextColor={t.textFaint}
             editable={!isSaving}
           />
 
@@ -193,6 +199,7 @@ export default function ProgramEditorScreen() {
                   updateExercise(workoutIndex, exerciseIndex, { exerciseName: text })
                 }
                 placeholder="Exercise (e.g. Bench Press)"
+                placeholderTextColor={t.textFaint}
                 editable={!isSaving}
               />
               <TextInput
@@ -202,6 +209,7 @@ export default function ProgramEditorScreen() {
                   updateExercise(workoutIndex, exerciseIndex, { muscleGroup: text })
                 }
                 placeholder="Muscle group (e.g. Chest)"
+                placeholderTextColor={t.textFaint}
                 editable={!isSaving}
               />
               <View style={styles.row}>
@@ -269,7 +277,7 @@ export default function ProgramEditorScreen() {
         disabled={isSaving}
       >
         {isSaving ? (
-          <ActivityIndicator color="#ffffff" />
+          <ActivityIndicator color={t.onAccent} />
         ) : (
           <Text style={styles.saveButtonText}>Save program</Text>
         )}
@@ -278,101 +286,105 @@ export default function ProgramEditorScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  errorText: {
-    color: "#dc2626",
-    marginBottom: 12,
-  },
-  label: {
-    fontWeight: "600",
-    fontSize: 13,
-    marginBottom: 4,
-    marginTop: 8,
-  },
-  smallLabel: {
-    fontWeight: "600",
-    fontSize: 12,
-    marginBottom: 4,
-    color: "#6b7280",
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 8,
-    backgroundColor: "#ffffff",
-  },
-  workoutCard: {
-    backgroundColor: "#f9fafb",
-    borderRadius: 14,
-    padding: 14,
-    marginTop: 16,
-  },
-  workoutHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  workoutTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  exerciseTitle: {
-    fontWeight: "700",
-    fontSize: 13,
-    color: "#374151",
-  },
-  exerciseCard: {
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    padding: 12,
-    marginBottom: 8,
-  },
-  removeText: {
-    color: "#dc2626",
-    fontWeight: "600",
-    fontSize: 12,
-  },
-  row: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  rowItem: {
-    flex: 1,
-  },
-  secondaryButton: {
-    borderWidth: 1,
-    borderColor: "#4f46e5",
-    borderRadius: 12,
-    paddingVertical: 10,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  secondaryButtonText: {
-    color: "#4f46e5",
-    fontWeight: "700",
-  },
-  saveButton: {
-    backgroundColor: "#111827",
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: "center",
-    marginTop: 20,
-  },
-  saveButtonText: {
-    color: "#ffffff",
-    fontWeight: "700",
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-});
+const createStyles = (t: Theme) =>
+  StyleSheet.create({
+    container: {
+      padding: 20,
+      paddingBottom: 40,
+    },
+    errorText: {
+      color: t.danger,
+      marginBottom: 12,
+    },
+    label: {
+      fontWeight: "600",
+      fontSize: 13,
+      marginBottom: 4,
+      marginTop: 8,
+      color: t.text,
+    },
+    smallLabel: {
+      fontWeight: "600",
+      fontSize: 12,
+      marginBottom: 4,
+      color: t.textMuted,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: t.inputBorder,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      marginBottom: 8,
+      backgroundColor: t.background,
+      color: t.text,
+    },
+    workoutCard: {
+      backgroundColor: t.card,
+      borderRadius: 14,
+      padding: 14,
+      marginTop: 16,
+    },
+    workoutHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 8,
+    },
+    workoutTitle: {
+      fontSize: 16,
+      fontWeight: "700",
+      color: t.text,
+    },
+    exerciseTitle: {
+      fontWeight: "700",
+      fontSize: 13,
+      color: t.textSecondary,
+    },
+    exerciseCard: {
+      backgroundColor: t.background,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: t.border,
+      padding: 12,
+      marginBottom: 8,
+    },
+    removeText: {
+      color: t.danger,
+      fontWeight: "600",
+      fontSize: 12,
+    },
+    row: {
+      flexDirection: "row",
+      gap: 10,
+    },
+    rowItem: {
+      flex: 1,
+    },
+    secondaryButton: {
+      borderWidth: 1,
+      borderColor: t.primary,
+      borderRadius: 12,
+      paddingVertical: 10,
+      alignItems: "center",
+      marginTop: 8,
+    },
+    secondaryButtonText: {
+      color: t.primary,
+      fontWeight: "700",
+    },
+    saveButton: {
+      backgroundColor: t.cta,
+      borderRadius: 12,
+      paddingVertical: 14,
+      alignItems: "center",
+      marginTop: 20,
+    },
+    saveButtonText: {
+      color: t.onAccent,
+      fontWeight: "700",
+    },
+    buttonDisabled: {
+      opacity: 0.6,
+    },
+  });

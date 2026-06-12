@@ -1,14 +1,14 @@
 # FreeFit
 
-Full-stack fitness app: nutrition tracking, progressive-overload training log, AI trainer (Gemini), whole-food meal suggestions, and smart push notifications.
+Full-stack fitness app: nutrition tracking with barcode scanning, progressive-overload training log, AI trainer (Gemini), whole-food meal suggestions, and smart push notifications.
 
-- `mobile/` — React Native + Expo (SDK 49), Expo Router, Zustand
+- `mobile/` — React Native + Expo (SDK 54), Expo Router, Zustand
 - `server/` — Node.js + Express + Prisma + PostgreSQL
 
 ## Local development
 
 ### Prerequisites
-- Node.js 20+
+- Node.js 20.19.4+ (required by React Native 0.81)
 - PostgreSQL running locally
 
 ### Backend
@@ -77,4 +77,5 @@ cd mobile && eas build:configure
 - [ ] Register/login from the deployed mobile build
 - [ ] AI chat replies (verifies `GEMINI_API_KEY` in production)
 - [ ] Food search returns results (verifies `USDA_API_KEY`)
+- [ ] Barcode scan finds a product (uses Open Food Facts — no API key needed)
 - [ ] Push notifications arrive on a physical device

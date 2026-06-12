@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import {
   ActivityIndicator,
@@ -11,6 +11,7 @@ import {
 } from "react-native";
 
 import ErrorBanner from "../../components/ErrorBanner";
+import { useTheme, type Theme } from "../../constants/theme";
 import { logout } from "../../services/auth.service";
 import {
   getNotificationPrefs,
@@ -19,6 +20,7 @@ import {
 } from "../../services/notification.service";
 import { getProfile, type UserProfileResponse } from "../../services/user.service";
 import { useAuthStore } from "../../stores/auth.store";
+import { useThemeStore, type ThemePreference } from "../../stores/theme.store";
 import { getApiErrorMessage } from "../../utils/api-error";
 
 const ACTIVITY_LABELS: Record<string, string> = {
@@ -50,7 +52,19 @@ const cmToFeetInches = (cm: number): string => {
   return `${feet}'${inches}"`;
 };
 
+const useStyles = () => {
+  const t = useTheme();
+  return useMemo(() => createStyles(t), [t]);
+};
+
+const APPEARANCE_OPTIONS: { label: string; value: ThemePreference }[] = [
+  { label: "System", value: "system" },
+  { label: "Light", value: "light" },
+  { label: "Dark", value: "dark" },
+];
+
 function InfoRow({ label, value }: { label: string; value: string }) {
+  const styles = useStyles();
   return (
     <View style={styles.infoRow}>
       <Text style={styles.infoLabel}>{label}</Text>
@@ -60,7 +74,11 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 }
 
 export default function ProfileScreen() {
+  const t = useTheme();
+  const styles = useStyles();
   const user = useAuthStore((state) => state.user);
+  const themePreference = useThemeStore((state) => state.preference);
+  const setThemePreference = useThemeStore((state) => state.setPreference);
   const [profile, setProfile] = useState<UserProfileResponse | null>(null);
   const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -113,7 +131,7 @@ export default function ProfileScreen() {
   if (isLoading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color={t.primary} />
       </View>
     );
   }
@@ -197,13 +215,41 @@ export default function ProfileScreen() {
         </View>
       ) : null}
 
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Appearance</Text>
+        <View style={styles.appearanceRow}>
+          {APPEARANCE_OPTIONS.map((option) => (
+            <Pressable
+              key={option.value}
+              style={[
+                styles.appearanceChip,
+                themePreference === option.value && styles.appearanceChipSelected,
+              ]}
+              onPress={() => setThemePreference(option.value)}
+            >
+              <Text
+                style={[
+                  styles.appearanceChipText,
+                  themePreference === option.value && styles.appearanceChipTextSelected,
+                ]}
+              >
+                {option.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+        <Text style={styles.appearanceHint}>
+          System follows your phone's light/dark setting.
+        </Text>
+      </View>
+
       <Pressable
         style={[styles.logoutButton, isLoggingOut && styles.buttonDisabled]}
         onPress={() => void handleLogout()}
         disabled={isLoggingOut}
       >
         {isLoggingOut ? (
-          <ActivityIndicator color="#dc2626" />
+          <ActivityIndicator color={t.danger} />
         ) : (
           <Text style={styles.logoutText}>Log out</Text>
         )}
@@ -212,89 +258,122 @@ export default function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  container: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: "700",
-    marginBottom: 16,
-  },
-  card: {
-    backgroundColor: "#f9fafb",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-  },
-  name: {
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  email: {
-    color: "#6b7280",
-    marginTop: 2,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    marginBottom: 10,
-  },
-  infoRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 6,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#e5e7eb",
-  },
-  infoLabel: {
-    color: "#6b7280",
-  },
-  infoValue: {
-    fontWeight: "600",
-  },
-  errorText: {
-    color: "#dc2626",
-    marginBottom: 12,
-  },
-  switchRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 8,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#e5e7eb",
-  },
-  switchLabelGroup: {
-    flex: 1,
-    paddingRight: 12,
-  },
-  switchLabel: {
-    fontWeight: "600",
-  },
-  switchSub: {
-    color: "#6b7280",
-    fontSize: 12,
-    marginTop: 2,
-  },
-  logoutButton: {
-    borderWidth: 1,
-    borderColor: "#dc2626",
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  logoutText: {
-    color: "#dc2626",
-    fontWeight: "700",
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-});
+const createStyles = (t: Theme) =>
+  StyleSheet.create({
+    centered: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    container: {
+      padding: 20,
+      paddingBottom: 40,
+    },
+    title: {
+      fontSize: 26,
+      fontWeight: "700",
+      marginBottom: 16,
+      color: t.text,
+    },
+    card: {
+      backgroundColor: t.card,
+      borderRadius: 16,
+      padding: 16,
+      marginBottom: 16,
+    },
+    name: {
+      fontSize: 18,
+      fontWeight: "700",
+      color: t.text,
+    },
+    email: {
+      color: t.textMuted,
+      marginTop: 2,
+    },
+    cardTitle: {
+      fontSize: 16,
+      fontWeight: "700",
+      marginBottom: 10,
+      color: t.text,
+    },
+    infoRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingVertical: 6,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: t.border,
+    },
+    infoLabel: {
+      color: t.textMuted,
+    },
+    infoValue: {
+      fontWeight: "600",
+      color: t.text,
+    },
+    errorText: {
+      color: t.danger,
+      marginBottom: 12,
+    },
+    switchRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingVertical: 8,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: t.border,
+    },
+    switchLabelGroup: {
+      flex: 1,
+      paddingRight: 12,
+    },
+    switchLabel: {
+      fontWeight: "600",
+      color: t.text,
+    },
+    switchSub: {
+      color: t.textMuted,
+      fontSize: 12,
+      marginTop: 2,
+    },
+    appearanceRow: {
+      flexDirection: "row",
+      gap: 8,
+    },
+    appearanceChip: {
+      flex: 1,
+      backgroundColor: t.chip,
+      borderRadius: 10,
+      paddingVertical: 9,
+      alignItems: "center",
+    },
+    appearanceChipSelected: {
+      backgroundColor: t.primarySolid,
+    },
+    appearanceChipText: {
+      color: t.textSecondary,
+      fontWeight: "600",
+      fontSize: 13,
+    },
+    appearanceChipTextSelected: {
+      color: t.onAccent,
+    },
+    appearanceHint: {
+      color: t.textFaint,
+      fontSize: 12,
+      marginTop: 8,
+    },
+    logoutButton: {
+      borderWidth: 1,
+      borderColor: t.danger,
+      borderRadius: 12,
+      paddingVertical: 14,
+      alignItems: "center",
+    },
+    logoutText: {
+      color: t.danger,
+      fontWeight: "700",
+    },
+    buttonDisabled: {
+      opacity: 0.6,
+    },
+  });

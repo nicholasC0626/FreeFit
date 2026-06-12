@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import {
   ActivityIndicator,
@@ -11,6 +11,7 @@ import {
 } from "react-native";
 
 import ErrorBanner from "../../components/ErrorBanner";
+import { useTheme, type Theme } from "../../constants/theme";
 import {
   createFoodLog,
   getFoodSuggestions,
@@ -37,6 +38,8 @@ const mealTypeForNow = (): MealType => {
 };
 
 export default function MealPlanScreen() {
+  const t = useTheme();
+  const styles = useMemo(() => createStyles(t), [t]);
   const [data, setData] = useState<SuggestionsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -93,7 +96,7 @@ export default function MealPlanScreen() {
   if (isLoading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color={t.primary} />
       </View>
     );
   }
@@ -159,7 +162,7 @@ export default function MealPlanScreen() {
             disabled={addingName !== null}
           >
             {addingName === suggestion.name ? (
-              <ActivityIndicator size="small" color="#4f46e5" />
+              <ActivityIndicator size="small" color={t.primary} />
             ) : (
               <Text style={styles.addButtonText}>+ Add to log</Text>
             )}
@@ -170,101 +173,105 @@ export default function MealPlanScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-  },
-  centered: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  container: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  heading: {
-    fontSize: 20,
-    fontWeight: "700",
-    marginBottom: 4,
-  },
-  subheading: {
-    fontSize: 13,
-    color: "#6b7280",
-    marginBottom: 16,
-  },
-  remainingCard: {
-    backgroundColor: "#111827",
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 16,
-  },
-  remainingTitle: {
-    color: "#9ca3af",
-    fontSize: 12,
-    fontWeight: "700",
-    textTransform: "uppercase",
-    marginBottom: 6,
-  },
-  remainingRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  remainingItem: {
-    color: "#ffffff",
-    fontWeight: "700",
-    fontSize: 15,
-  },
-  errorText: {
-    color: "#dc2626",
-    marginBottom: 8,
-  },
-  messageText: {
-    color: "#6b7280",
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  card: {
-    backgroundColor: "#f9fafb",
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  foodName: {
-    fontWeight: "600",
-    fontSize: 15,
-  },
-  foodMeta: {
-    color: "#6b7280",
-    fontSize: 12,
-    marginTop: 2,
-  },
-  macroCol: {
-    alignItems: "flex-end",
-    paddingLeft: 8,
-  },
-  foodCalories: {
-    fontWeight: "700",
-  },
-  addButton: {
-    marginTop: 10,
-    paddingVertical: 8,
-    alignItems: "center",
-    borderRadius: 10,
-    backgroundColor: "#eef2ff",
-  },
-  addButtonDisabled: {
-    opacity: 0.5,
-  },
-  addButtonText: {
-    color: "#4f46e5",
-    fontWeight: "700",
-    fontSize: 13,
-  },
-});
+const createStyles = (t: Theme) =>
+  StyleSheet.create({
+    flex: {
+      flex: 1,
+    },
+    centered: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    container: {
+      padding: 20,
+      paddingBottom: 40,
+    },
+    heading: {
+      fontSize: 20,
+      fontWeight: "700",
+      marginBottom: 4,
+      color: t.text,
+    },
+    subheading: {
+      fontSize: 13,
+      color: t.textMuted,
+      marginBottom: 16,
+    },
+    remainingCard: {
+      backgroundColor: t.hero,
+      borderRadius: 12,
+      padding: 14,
+      marginBottom: 16,
+    },
+    remainingTitle: {
+      color: t.heroMuted,
+      fontSize: 12,
+      fontWeight: "700",
+      textTransform: "uppercase",
+      marginBottom: 6,
+    },
+    remainingRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    remainingItem: {
+      color: t.heroText,
+      fontWeight: "700",
+      fontSize: 15,
+    },
+    errorText: {
+      color: t.danger,
+      marginBottom: 8,
+    },
+    messageText: {
+      color: t.textMuted,
+      fontSize: 14,
+      marginBottom: 8,
+    },
+    card: {
+      backgroundColor: t.card,
+      borderWidth: 1,
+      borderColor: t.border,
+      borderRadius: 12,
+      padding: 14,
+      marginBottom: 10,
+    },
+    cardHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    foodName: {
+      fontWeight: "600",
+      fontSize: 15,
+      color: t.text,
+    },
+    foodMeta: {
+      color: t.textMuted,
+      fontSize: 12,
+      marginTop: 2,
+    },
+    macroCol: {
+      alignItems: "flex-end",
+      paddingLeft: 8,
+    },
+    foodCalories: {
+      fontWeight: "700",
+      color: t.text,
+    },
+    addButton: {
+      marginTop: 10,
+      paddingVertical: 8,
+      alignItems: "center",
+      borderRadius: 10,
+      backgroundColor: t.primaryTint,
+    },
+    addButtonDisabled: {
+      opacity: 0.5,
+    },
+    addButtonText: {
+      color: t.primary,
+      fontWeight: "700",
+      fontSize: 13,
+    },
+  });

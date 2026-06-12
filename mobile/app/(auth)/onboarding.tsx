@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
+import { useTheme, type Theme } from "../../constants/theme";
 import { upsertProfile } from "../../services/user.service";
 import { getApiErrorMessage } from "../../utils/api-error";
 
@@ -25,8 +26,15 @@ const STEPS = [
 const ftInToCm = (feet: number, inches: number): number => (feet * 12 + inches) * 2.54;
 const lbToKg = (lb: number): number => lb / 2.20462;
 
+const useStyles = () => {
+  const t = useTheme();
+  return useMemo(() => createStyles(t), [t]);
+};
+
 export default function OnboardingScreen() {
   const router = useRouter();
+  const t = useTheme();
+  const styles = useStyles();
 
   const [step, setStep] = useState(0);
   const [age, setAge] = useState("27");
@@ -152,6 +160,7 @@ export default function OnboardingScreen() {
               keyboardType="number-pad"
               onChangeText={setHeightFt}
               placeholder="ft"
+              placeholderTextColor={t.textFaint}
               style={[styles.input, styles.halfInput]}
               value={heightFt}
             />
@@ -159,6 +168,7 @@ export default function OnboardingScreen() {
               keyboardType="number-pad"
               onChangeText={setHeightIn}
               placeholder="in"
+              placeholderTextColor={t.textFaint}
               style={[styles.input, styles.halfInput]}
               value={heightIn}
             />
@@ -233,7 +243,7 @@ export default function OnboardingScreen() {
         </Pressable>
         <Pressable disabled={isSubmitting} onPress={handleNext} style={styles.primaryButton}>
           {isSubmitting ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={t.onAccent} />
           ) : (
             <Text style={styles.primaryButtonText}>{isLastStep ? "Finish" : "Next"}</Text>
           )}
@@ -252,6 +262,7 @@ function ChoiceGrid({
   options: Array<{ label: string; value: string }>;
   onChange: (value: string) => void;
 }) {
+  const styles = useStyles();
   return (
     <View style={styles.choiceGrid}>
       {options.map((option) => (
@@ -267,6 +278,7 @@ function ChoiceGrid({
 }
 
 function ChoiceButton({ active, label, onPress }: { active: boolean; label: string; onPress: () => void }) {
+  const styles = useStyles();
   return (
     <Pressable onPress={onPress} style={[styles.choiceButton, active ? styles.choiceButtonActive : null]}>
       <Text style={[styles.choiceButtonText, active ? styles.choiceButtonTextActive : null]}>{label}</Text>
@@ -274,92 +286,97 @@ function ChoiceButton({ active, label, onPress }: { active: boolean; label: stri
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 40,
-    gap: 10,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-  },
-  step: {
-    color: "#6b7280",
-    marginBottom: 8,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-  },
-  halfInput: {
-    flex: 1,
-  },
-  row: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  choiceGrid: {
-    gap: 8,
-  },
-  choiceButton: {
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-  },
-  choiceButtonActive: {
-    borderColor: "#111827",
-    backgroundColor: "#111827",
-  },
-  choiceButtonText: {
-    color: "#111827",
-    fontWeight: "500",
-  },
-  choiceButtonTextActive: {
-    color: "#ffffff",
-  },
-  actions: {
-    flexDirection: "row",
-    gap: 8,
-    marginTop: 10,
-  },
-  secondaryButton: {
-    flex: 1,
-    minHeight: 46,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  secondaryButtonText: {
-    color: "#111827",
-    fontWeight: "600",
-  },
-  primaryButton: {
-    flex: 1,
-    minHeight: 46,
-    borderRadius: 10,
-    backgroundColor: "#111827",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  primaryButtonText: {
-    color: "#ffffff",
-    fontWeight: "600",
-  },
-  error: {
-    color: "#dc2626",
-  },
-});
+const createStyles = (t: Theme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      paddingHorizontal: 20,
+      paddingTop: 40,
+      gap: 10,
+      backgroundColor: t.background,
+    },
+    title: {
+      fontSize: 28,
+      fontWeight: "700",
+      color: t.text,
+    },
+    step: {
+      color: t.textMuted,
+      marginBottom: 8,
+    },
+    label: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: t.text,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: t.inputBorder,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      fontSize: 16,
+      color: t.text,
+    },
+    halfInput: {
+      flex: 1,
+    },
+    row: {
+      flexDirection: "row",
+      gap: 8,
+    },
+    choiceGrid: {
+      gap: 8,
+    },
+    choiceButton: {
+      borderWidth: 1,
+      borderColor: t.inputBorder,
+      borderRadius: 10,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+    },
+    choiceButtonActive: {
+      borderColor: t.cta,
+      backgroundColor: t.cta,
+    },
+    choiceButtonText: {
+      color: t.text,
+      fontWeight: "500",
+    },
+    choiceButtonTextActive: {
+      color: t.onAccent,
+    },
+    actions: {
+      flexDirection: "row",
+      gap: 8,
+      marginTop: 10,
+    },
+    secondaryButton: {
+      flex: 1,
+      minHeight: 46,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: t.inputBorder,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    secondaryButtonText: {
+      color: t.text,
+      fontWeight: "600",
+    },
+    primaryButton: {
+      flex: 1,
+      minHeight: 46,
+      borderRadius: 10,
+      backgroundColor: t.cta,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    primaryButtonText: {
+      color: t.onAccent,
+      fontWeight: "600",
+    },
+    error: {
+      color: t.danger,
+    },
+  });

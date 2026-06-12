@@ -10,8 +10,9 @@ import {
   getFoodSuggestions,
   updateFoodLog,
 } from "../services/nutrition.service";
-import { searchFoods } from "../services/food-api.service";
+import { lookupBarcode, searchFoods } from "../services/food-api.service";
 import {
+  barcodeParamSchema,
   dateQuerySchema,
   fastFoodQuerySchema,
   searchQuerySchema,
@@ -61,6 +62,27 @@ export const searchFoodsHandler: RequestHandler = async (req, res, next) => {
 
     const results = await searchFoods(query.data.q);
     res.status(200).json({ results });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const barcodeLookupHandler: RequestHandler<{ code: string }> = async (req, res, next) => {
+  try {
+    const userId = getUserId(req);
+    if (!userId) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const params = barcodeParamSchema.safeParse(req.params);
+    if (!params.success) {
+      next(params.error);
+      return;
+    }
+
+    const result = await lookupBarcode(params.data.code);
+    res.status(200).json({ result });
   } catch (error) {
     next(error);
   }

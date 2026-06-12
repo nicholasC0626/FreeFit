@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -9,11 +9,14 @@ import {
 } from "react-native";
 
 import ErrorBanner from "../../components/ErrorBanner";
+import { useTheme, type Theme } from "../../constants/theme";
 import { reviewAiProgram } from "../../services/ai.service";
 import { listPrograms, type Program } from "../../services/training.service";
 import { getApiErrorMessage } from "../../utils/api-error";
 
 export default function ProgramReviewScreen() {
+  const t = useTheme();
+  const styles = useMemo(() => createStyles(t), [t]);
   const [programs, setPrograms] = useState<Program[]>([]);
   const [isLoadingPrograms, setIsLoadingPrograms] = useState(true);
   const [reviewingId, setReviewingId] = useState<string | null>(null);
@@ -59,7 +62,7 @@ export default function ProgramReviewScreen() {
       </Text>
 
       {isLoadingPrograms ? (
-        <ActivityIndicator style={styles.loader} color="#4f46e5" />
+        <ActivityIndicator style={styles.loader} color={t.primary} />
       ) : programs.length === 0 ? (
         <Text style={styles.emptyText}>
           You don't have any programs yet. Create one on the Training tab first.
@@ -81,7 +84,7 @@ export default function ProgramReviewScreen() {
               </Text>
             </View>
             {reviewingId === program.id ? (
-              <ActivityIndicator size="small" color="#4f46e5" />
+              <ActivityIndicator size="small" color={t.primary} />
             ) : (
               <Text style={styles.reviewLink}>Review</Text>
             )}
@@ -106,78 +109,81 @@ export default function ProgramReviewScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-  },
-  container: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  heading: {
-    fontSize: 20,
-    fontWeight: "700",
-    marginBottom: 4,
-  },
-  subheading: {
-    fontSize: 13,
-    color: "#6b7280",
-    marginBottom: 16,
-  },
-  loader: {
-    marginTop: 24,
-  },
-  emptyText: {
-    color: "#6b7280",
-    fontSize: 14,
-    marginTop: 12,
-  },
-  programCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f3f4f6",
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 8,
-  },
-  programCardActive: {
-    backgroundColor: "#e0e7ff",
-  },
-  programName: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#111827",
-  },
-  programMeta: {
-    fontSize: 12,
-    color: "#6b7280",
-    marginTop: 2,
-  },
-  reviewLink: {
-    color: "#4f46e5",
-    fontWeight: "700",
-    fontSize: 14,
-  },
-  errorText: {
-    color: "#dc2626",
-    marginTop: 8,
-  },
-  reviewCard: {
-    backgroundColor: "#f9fafb",
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 16,
-  },
-  reviewTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    marginBottom: 8,
-  },
-  reviewBody: {
-    fontSize: 14,
-    lineHeight: 21,
-    color: "#111827",
-  },
-});
+const createStyles = (t: Theme) =>
+  StyleSheet.create({
+    flex: {
+      flex: 1,
+    },
+    container: {
+      padding: 20,
+      paddingBottom: 40,
+    },
+    heading: {
+      fontSize: 20,
+      fontWeight: "700",
+      marginBottom: 4,
+      color: t.text,
+    },
+    subheading: {
+      fontSize: 13,
+      color: t.textMuted,
+      marginBottom: 16,
+    },
+    loader: {
+      marginTop: 24,
+    },
+    emptyText: {
+      color: t.textMuted,
+      fontSize: 14,
+      marginTop: 12,
+    },
+    programCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: t.chip,
+      borderRadius: 12,
+      padding: 14,
+      marginBottom: 8,
+    },
+    programCardActive: {
+      backgroundColor: t.primaryTint,
+    },
+    programName: {
+      fontSize: 15,
+      fontWeight: "600",
+      color: t.text,
+    },
+    programMeta: {
+      fontSize: 12,
+      color: t.textMuted,
+      marginTop: 2,
+    },
+    reviewLink: {
+      color: t.primary,
+      fontWeight: "700",
+      fontSize: 14,
+    },
+    errorText: {
+      color: t.danger,
+      marginTop: 8,
+    },
+    reviewCard: {
+      backgroundColor: t.card,
+      borderWidth: 1,
+      borderColor: t.border,
+      borderRadius: 12,
+      padding: 16,
+      marginTop: 16,
+    },
+    reviewTitle: {
+      fontSize: 16,
+      fontWeight: "700",
+      marginBottom: 8,
+      color: t.text,
+    },
+    reviewBody: {
+      fontSize: 14,
+      lineHeight: 21,
+      color: t.text,
+    },
+  });

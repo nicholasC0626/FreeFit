@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import {
@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 
+import { useTheme, type Theme } from "../../constants/theme";
 import {
   addExerciseLog,
   completeSession,
@@ -28,6 +29,8 @@ type SetDraft = {
 
 export default function ActiveWorkoutScreen() {
   const router = useRouter();
+  const t = useTheme();
+  const styles = useMemo(() => createStyles(t), [t]);
   const { id } = useLocalSearchParams<{ id: string }>();
   const [session, setSession] = useState<WorkoutSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -124,7 +127,7 @@ export default function ActiveWorkoutScreen() {
   if (isLoading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color={t.primary} />
       </View>
     );
   }
@@ -178,6 +181,7 @@ export default function ActiveWorkoutScreen() {
                   setSetDrafts((prev) => ({ ...prev, [log.id]: { ...draft, weight: text } }))
                 }
                 placeholder="Weight"
+                placeholderTextColor={t.textFaint}
                 keyboardType="decimal-pad"
               />
               <TextInput
@@ -187,6 +191,7 @@ export default function ActiveWorkoutScreen() {
                   setSetDrafts((prev) => ({ ...prev, [log.id]: { ...draft, reps: text } }))
                 }
                 placeholder="Reps"
+                placeholderTextColor={t.textFaint}
                 keyboardType="number-pad"
               />
               <Pressable
@@ -195,7 +200,7 @@ export default function ActiveWorkoutScreen() {
                 disabled={loggingExerciseId !== null}
               >
                 {loggingExerciseId === log.id ? (
-                  <ActivityIndicator color="#ffffff" size="small" />
+                  <ActivityIndicator color={t.onAccent} size="small" />
                 ) : (
                   <Text style={styles.logButtonText}>Log set</Text>
                 )}
@@ -235,12 +240,14 @@ export default function ActiveWorkoutScreen() {
           value={newExerciseName}
           onChangeText={setNewExerciseName}
           placeholder="Exercise (e.g. Lateral Raise)"
+          placeholderTextColor={t.textFaint}
         />
         <TextInput
           style={styles.input}
           value={newMuscleGroup}
           onChangeText={setNewMuscleGroup}
           placeholder="Muscle group (e.g. Shoulders)"
+          placeholderTextColor={t.textFaint}
         />
         <Pressable
           style={styles.smallButton}
@@ -248,7 +255,7 @@ export default function ActiveWorkoutScreen() {
           disabled={isAddingExercise}
         >
           {isAddingExercise ? (
-            <ActivityIndicator color="#ffffff" size="small" />
+            <ActivityIndicator color={t.onAccent} size="small" />
           ) : (
             <Text style={styles.smallButtonText}>Add exercise</Text>
           )}
@@ -261,7 +268,7 @@ export default function ActiveWorkoutScreen() {
         disabled={isFinishing}
       >
         {isFinishing ? (
-          <ActivityIndicator color="#ffffff" />
+          <ActivityIndicator color={t.successText} />
         ) : (
           <Text style={styles.finishButtonText}>Finish workout</Text>
         )}
@@ -270,138 +277,144 @@ export default function ActiveWorkoutScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
-  },
-  container: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-  },
-  subtitle: {
-    color: "#6b7280",
-    marginBottom: 16,
-  },
-  errorText: {
-    color: "#dc2626",
-    marginBottom: 12,
-  },
-  exerciseCard: {
-    backgroundColor: "#f9fafb",
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 12,
-  },
-  exerciseName: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  exerciseMeta: {
-    color: "#6b7280",
-    fontSize: 12,
-    marginBottom: 8,
-  },
-  setRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 4,
-  },
-  setText: {
-    fontWeight: "600",
-  },
-  prBadge: {
-    marginLeft: 8,
-    backgroundColor: "#fbbf24",
-    color: "#78350f",
-    fontWeight: "800",
-    fontSize: 11,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-    overflow: "hidden",
-  },
-  logRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginTop: 8,
-    alignItems: "center",
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    backgroundColor: "#ffffff",
-    marginBottom: 8,
-  },
-  logInput: {
-    flex: 1,
-    marginBottom: 0,
-  },
-  logButton: {
-    backgroundColor: "#111827",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  logButtonText: {
-    color: "#ffffff",
-    fontWeight: "700",
-    fontSize: 13,
-  },
-  plannedCard: {
-    backgroundColor: "#f9fafb",
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    fontWeight: "700",
-    marginBottom: 10,
-  },
-  plannedRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 8,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#e5e7eb",
-  },
-  plannedInfo: {
-    flex: 1,
-  },
-  smallButton: {
-    backgroundColor: "#4f46e5",
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    alignItems: "center",
-  },
-  smallButtonText: {
-    color: "#ffffff",
-    fontWeight: "700",
-    fontSize: 13,
-  },
-  finishButton: {
-    backgroundColor: "#065f46",
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  finishButtonText: {
-    color: "#ffffff",
-    fontWeight: "700",
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-});
+const createStyles = (t: Theme) =>
+  StyleSheet.create({
+    centered: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 20,
+    },
+    container: {
+      padding: 20,
+      paddingBottom: 40,
+    },
+    title: {
+      fontSize: 24,
+      fontWeight: "700",
+      color: t.text,
+    },
+    subtitle: {
+      color: t.textMuted,
+      marginBottom: 16,
+    },
+    errorText: {
+      color: t.danger,
+      marginBottom: 12,
+    },
+    exerciseCard: {
+      backgroundColor: t.card,
+      borderRadius: 14,
+      padding: 16,
+      marginBottom: 12,
+    },
+    exerciseName: {
+      fontSize: 16,
+      fontWeight: "700",
+      color: t.text,
+    },
+    exerciseMeta: {
+      color: t.textMuted,
+      fontSize: 12,
+      marginBottom: 8,
+    },
+    setRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: 4,
+    },
+    setText: {
+      fontWeight: "600",
+      color: t.text,
+    },
+    prBadge: {
+      marginLeft: 8,
+      backgroundColor: "#fbbf24",
+      color: "#78350f",
+      fontWeight: "800",
+      fontSize: 11,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 8,
+      overflow: "hidden",
+    },
+    logRow: {
+      flexDirection: "row",
+      gap: 8,
+      marginTop: 8,
+      alignItems: "center",
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: t.inputBorder,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      backgroundColor: t.background,
+      color: t.text,
+      marginBottom: 8,
+    },
+    logInput: {
+      flex: 1,
+      marginBottom: 0,
+    },
+    logButton: {
+      backgroundColor: t.cta,
+      borderRadius: 10,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+    },
+    logButtonText: {
+      color: t.onAccent,
+      fontWeight: "700",
+      fontSize: 13,
+    },
+    plannedCard: {
+      backgroundColor: t.card,
+      borderRadius: 14,
+      padding: 16,
+      marginBottom: 12,
+    },
+    sectionTitle: {
+      fontWeight: "700",
+      marginBottom: 10,
+      color: t.text,
+    },
+    plannedRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingVertical: 8,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: t.border,
+    },
+    plannedInfo: {
+      flex: 1,
+    },
+    smallButton: {
+      backgroundColor: t.primarySolid,
+      borderRadius: 10,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      alignItems: "center",
+    },
+    smallButtonText: {
+      color: t.onAccent,
+      fontWeight: "700",
+      fontSize: 13,
+    },
+    finishButton: {
+      backgroundColor: t.successBg,
+      borderRadius: 12,
+      paddingVertical: 14,
+      alignItems: "center",
+      marginTop: 8,
+    },
+    finishButtonText: {
+      color: t.successText,
+      fontWeight: "700",
+    },
+    buttonDisabled: {
+      opacity: 0.6,
+    },
+  });

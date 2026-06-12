@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 
+import { useTheme, type Theme } from "../../constants/theme";
 import { generateGroceryList, type GroceryList } from "../../services/nutrition.service";
 import { getApiErrorMessage } from "../../utils/api-error";
 
@@ -20,6 +21,8 @@ const BUDGET_OPTIONS = [
 ] as const;
 
 export default function GroceryListScreen() {
+  const t = useTheme();
+  const styles = useMemo(() => createStyles(t), [t]);
   const [days, setDays] = useState<number>(7);
   const [budget, setBudget] = useState<"LOW" | "MEDIUM" | "HIGH">("MEDIUM");
   const [restrictions, setRestrictions] = useState("");
@@ -94,6 +97,7 @@ export default function GroceryListScreen() {
         value={restrictions}
         onChangeText={setRestrictions}
         placeholder="e.g. no dairy, vegetarian"
+        placeholderTextColor={t.textFaint}
       />
 
       <Pressable
@@ -102,7 +106,7 @@ export default function GroceryListScreen() {
         disabled={isGenerating}
       >
         {isGenerating ? (
-          <ActivityIndicator color="#ffffff" size="small" />
+          <ActivityIndicator color={t.onAccent} size="small" />
         ) : (
           <Text style={styles.generateButtonText}>Generate grocery list</Text>
         )}
@@ -139,123 +143,128 @@ export default function GroceryListScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-  },
-  container: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  heading: {
-    fontSize: 20,
-    fontWeight: "700",
-    marginBottom: 4,
-  },
-  subheading: {
-    fontSize: 13,
-    color: "#6b7280",
-    marginBottom: 16,
-  },
-  fieldLabel: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#374151",
-    marginBottom: 6,
-  },
-  chipRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 14,
-  },
-  chip: {
-    backgroundColor: "#f3f4f6",
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  chipSelected: {
-    backgroundColor: "#4f46e5",
-  },
-  chipText: {
-    color: "#374151",
-    fontWeight: "600",
-    fontSize: 13,
-  },
-  chipTextSelected: {
-    color: "#ffffff",
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    marginBottom: 16,
-  },
-  generateButton: {
-    backgroundColor: "#4f46e5",
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  generateButtonDisabled: {
-    opacity: 0.6,
-  },
-  generateButtonText: {
-    color: "#ffffff",
-    fontWeight: "700",
-    fontSize: 15,
-  },
-  errorText: {
-    color: "#dc2626",
-    marginTop: 10,
-  },
-  sectionCard: {
-    backgroundColor: "#f9fafb",
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 12,
-    padding: 14,
-    marginTop: 12,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    marginBottom: 6,
-  },
-  itemRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 7,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#e5e7eb",
-  },
-  itemName: {
-    fontWeight: "600",
-    fontSize: 14,
-  },
-  itemNote: {
-    color: "#6b7280",
-    fontSize: 12,
-    marginTop: 2,
-  },
-  itemQuantity: {
-    color: "#4f46e5",
-    fontWeight: "700",
-    fontSize: 13,
-    paddingLeft: 8,
-  },
-  tipsCard: {
-    backgroundColor: "#eef2ff",
-    borderRadius: 12,
-    padding: 14,
-    marginTop: 12,
-  },
-  tipText: {
-    fontSize: 13,
-    color: "#374151",
-    marginTop: 4,
-    lineHeight: 19,
-  },
-});
+const createStyles = (t: Theme) =>
+  StyleSheet.create({
+    flex: {
+      flex: 1,
+    },
+    container: {
+      padding: 20,
+      paddingBottom: 40,
+    },
+    heading: {
+      fontSize: 20,
+      fontWeight: "700",
+      marginBottom: 4,
+      color: t.text,
+    },
+    subheading: {
+      fontSize: 13,
+      color: t.textMuted,
+      marginBottom: 16,
+    },
+    fieldLabel: {
+      fontSize: 13,
+      fontWeight: "700",
+      color: t.textSecondary,
+      marginBottom: 6,
+    },
+    chipRow: {
+      flexDirection: "row",
+      gap: 8,
+      marginBottom: 14,
+    },
+    chip: {
+      backgroundColor: t.chip,
+      borderRadius: 999,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+    },
+    chipSelected: {
+      backgroundColor: t.primarySolid,
+    },
+    chipText: {
+      color: t.textSecondary,
+      fontWeight: "600",
+      fontSize: 13,
+    },
+    chipTextSelected: {
+      color: t.onAccent,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: t.inputBorder,
+      borderRadius: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      marginBottom: 16,
+      color: t.text,
+    },
+    generateButton: {
+      backgroundColor: t.primarySolid,
+      borderRadius: 12,
+      paddingVertical: 12,
+      alignItems: "center",
+    },
+    generateButtonDisabled: {
+      opacity: 0.6,
+    },
+    generateButtonText: {
+      color: t.onAccent,
+      fontWeight: "700",
+      fontSize: 15,
+    },
+    errorText: {
+      color: t.danger,
+      marginTop: 10,
+    },
+    sectionCard: {
+      backgroundColor: t.card,
+      borderWidth: 1,
+      borderColor: t.border,
+      borderRadius: 12,
+      padding: 14,
+      marginTop: 12,
+    },
+    sectionTitle: {
+      fontSize: 16,
+      fontWeight: "700",
+      marginBottom: 6,
+      color: t.text,
+    },
+    itemRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingVertical: 7,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: t.border,
+    },
+    itemName: {
+      fontWeight: "600",
+      fontSize: 14,
+      color: t.text,
+    },
+    itemNote: {
+      color: t.textMuted,
+      fontSize: 12,
+      marginTop: 2,
+    },
+    itemQuantity: {
+      color: t.primary,
+      fontWeight: "700",
+      fontSize: 13,
+      paddingLeft: 8,
+    },
+    tipsCard: {
+      backgroundColor: t.primaryTint,
+      borderRadius: 12,
+      padding: 14,
+      marginTop: 12,
+    },
+    tipText: {
+      fontSize: 13,
+      color: t.textSecondary,
+      marginTop: 4,
+      lineHeight: 19,
+    },
+  });

@@ -80,11 +80,33 @@ export const searchFoods = async (query: string): Promise<FoodSearchResult[]> =>
   return data.results;
 };
 
+export type BarcodeFood = {
+  barcode: string;
+  description: string;
+  brand: string | null;
+  servingSize: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number | null;
+  sugar: number | null;
+  sodium: number | null;
+};
+
+export const lookupBarcode = async (code: string): Promise<BarcodeFood> => {
+  const { data } = await api.get<{ result: BarcodeFood }>(`/api/nutrition/barcode/${code}`, {
+    headers: authHeaders(),
+  });
+  return data.result;
+};
+
 export type FoodLogPayload = {
   date?: string;
   mealType: MealType;
   foodName: string;
   brand?: string;
+  barcode?: string;
   servingSize: string;
   servings: number;
   calories: number;

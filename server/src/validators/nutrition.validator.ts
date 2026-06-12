@@ -12,6 +12,10 @@ export const searchQuerySchema = z.object({
   q: z.string().trim().min(2, "Search query must be at least 2 characters").max(100),
 });
 
+export const barcodeParamSchema = z.object({
+  code: z.string().trim().regex(/^\d{6,14}$/, "Barcode must be 6-14 digits"),
+});
+
 export type DateQueryInput = z.infer<typeof dateQuerySchema>;
 
 export const fastFoodQuerySchema = z.object({

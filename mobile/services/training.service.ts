@@ -155,3 +155,41 @@ export const logSet = async (
   );
   return data.set;
 };
+
+export type ExerciseHistoryEntry = {
+  sessionDate: string;
+  sets: {
+    setNumber: number;
+    weight: number;
+    reps: number;
+    rpe: number | null;
+    setType: SetType;
+    isPersonalRecord: boolean;
+  }[];
+};
+
+/** Last 30 sessions for an exercise, newest first. */
+export const getExerciseHistory = async (
+  exerciseName: string,
+): Promise<ExerciseHistoryEntry[]> => {
+  const { data } = await api.get<{ history: ExerciseHistoryEntry[] }>(
+    `/api/training/exercise-history/${encodeURIComponent(exerciseName)}`,
+    { headers: authHeaders() },
+  );
+  return data.history;
+};
+
+export type PersonalRecord = {
+  exerciseName: string;
+  muscleGroup: string;
+  weight: number;
+  reps: number;
+  date: string;
+};
+
+export const getPersonalRecords = async (): Promise<PersonalRecord[]> => {
+  const { data } = await api.get<{ prs: PersonalRecord[] }>("/api/training/prs", {
+    headers: authHeaders(),
+  });
+  return data.prs;
+};

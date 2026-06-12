@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -9,6 +9,7 @@ import {
 } from "react-native";
 
 import ErrorBanner from "../../components/ErrorBanner";
+import { useTheme, type Theme } from "../../constants/theme";
 import { getFastFoodOptions, type FastFoodItem } from "../../services/nutrition.service";
 import { getApiErrorMessage } from "../../utils/api-error";
 
@@ -25,6 +26,8 @@ const PROTEIN_FILTERS = [
 ] as const;
 
 export default function FastFoodScreen() {
+  const t = useTheme();
+  const styles = useMemo(() => createStyles(t), [t]);
   const [maxCalories, setMaxCalories] = useState<number | undefined>(undefined);
   const [minProtein, setMinProtein] = useState<number | undefined>(undefined);
   const [items, setItems] = useState<FastFoodItem[]>([]);
@@ -103,7 +106,7 @@ export default function FastFoodScreen() {
       {error ? <ErrorBanner message={error} onRetry={() => void load()} /> : null}
 
       {isLoading ? (
-        <ActivityIndicator style={styles.loader} color="#4f46e5" />
+        <ActivityIndicator style={styles.loader} color={t.primary} />
       ) : items.length === 0 ? (
         <Text style={styles.emptyText}>No menu items match those filters.</Text>
       ) : (
@@ -132,92 +135,97 @@ export default function FastFoodScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-  },
-  container: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  heading: {
-    fontSize: 20,
-    fontWeight: "700",
-    marginBottom: 4,
-  },
-  subheading: {
-    fontSize: 13,
-    color: "#6b7280",
-    marginBottom: 16,
-  },
-  filterRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 8,
-  },
-  chip: {
-    backgroundColor: "#f3f4f6",
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-  },
-  chipSelected: {
-    backgroundColor: "#4f46e5",
-  },
-  chipText: {
-    color: "#374151",
-    fontWeight: "600",
-    fontSize: 12,
-  },
-  chipTextSelected: {
-    color: "#ffffff",
-  },
-  loader: {
-    marginTop: 24,
-  },
-  errorText: {
-    color: "#dc2626",
-    marginTop: 8,
-  },
-  emptyText: {
-    color: "#6b7280",
-    fontSize: 14,
-    marginTop: 16,
-  },
-  restaurantCard: {
-    backgroundColor: "#f9fafb",
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 12,
-    padding: 14,
-    marginTop: 12,
-  },
-  restaurantName: {
-    fontSize: 16,
-    fontWeight: "700",
-    marginBottom: 6,
-  },
-  itemRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 8,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#e5e7eb",
-  },
-  itemName: {
-    fontWeight: "600",
-    fontSize: 14,
-  },
-  itemMeta: {
-    color: "#6b7280",
-    fontSize: 12,
-    marginTop: 2,
-  },
-  macroCol: {
-    alignItems: "flex-end",
-    paddingLeft: 8,
-  },
-  itemCalories: {
-    fontWeight: "700",
-  },
-});
+const createStyles = (t: Theme) =>
+  StyleSheet.create({
+    flex: {
+      flex: 1,
+    },
+    container: {
+      padding: 20,
+      paddingBottom: 40,
+    },
+    heading: {
+      fontSize: 20,
+      fontWeight: "700",
+      marginBottom: 4,
+      color: t.text,
+    },
+    subheading: {
+      fontSize: 13,
+      color: t.textMuted,
+      marginBottom: 16,
+    },
+    filterRow: {
+      flexDirection: "row",
+      gap: 8,
+      marginBottom: 8,
+    },
+    chip: {
+      backgroundColor: t.chip,
+      borderRadius: 999,
+      paddingHorizontal: 12,
+      paddingVertical: 7,
+    },
+    chipSelected: {
+      backgroundColor: t.primarySolid,
+    },
+    chipText: {
+      color: t.textSecondary,
+      fontWeight: "600",
+      fontSize: 12,
+    },
+    chipTextSelected: {
+      color: t.onAccent,
+    },
+    loader: {
+      marginTop: 24,
+    },
+    errorText: {
+      color: t.danger,
+      marginTop: 8,
+    },
+    emptyText: {
+      color: t.textMuted,
+      fontSize: 14,
+      marginTop: 16,
+    },
+    restaurantCard: {
+      backgroundColor: t.card,
+      borderWidth: 1,
+      borderColor: t.border,
+      borderRadius: 12,
+      padding: 14,
+      marginTop: 12,
+    },
+    restaurantName: {
+      fontSize: 16,
+      fontWeight: "700",
+      marginBottom: 6,
+      color: t.text,
+    },
+    itemRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingVertical: 8,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: t.border,
+    },
+    itemName: {
+      fontWeight: "600",
+      fontSize: 14,
+      color: t.text,
+    },
+    itemMeta: {
+      color: t.textMuted,
+      fontSize: 12,
+      marginTop: 2,
+    },
+    macroCol: {
+      alignItems: "flex-end",
+      paddingLeft: 8,
+    },
+    itemCalories: {
+      fontWeight: "700",
+      color: t.text,
+    },
+  });

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -8,6 +8,7 @@ import {
   View,
 } from "react-native";
 
+import { useTheme, type Theme } from "../../constants/theme";
 import { suggestAiExercises, type ExerciseSuggestion } from "../../services/ai.service";
 import { getApiErrorMessage } from "../../utils/api-error";
 
@@ -25,6 +26,8 @@ const MUSCLE_GROUPS = [
 ];
 
 export default function ExerciseSuggestScreen() {
+  const t = useTheme();
+  const styles = useMemo(() => createStyles(t), [t]);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<ExerciseSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -74,7 +77,7 @@ export default function ExerciseSuggestScreen() {
 
       {isLoading ? (
         <View style={styles.loadingRow}>
-          <ActivityIndicator color="#4f46e5" />
+          <ActivityIndicator color={t.primary} />
           <Text style={styles.loadingText}>Ranking the best {selectedGroup} exercises…</Text>
         </View>
       ) : null}
@@ -97,91 +100,93 @@ export default function ExerciseSuggestScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-  },
-  container: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  heading: {
-    fontSize: 20,
-    fontWeight: "700",
-    marginBottom: 4,
-  },
-  subheading: {
-    fontSize: 13,
-    color: "#6b7280",
-    marginBottom: 16,
-  },
-  chipRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 16,
-  },
-  chip: {
-    backgroundColor: "#f3f4f6",
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  chipSelected: {
-    backgroundColor: "#4f46e5",
-  },
-  chipText: {
-    color: "#374151",
-    fontWeight: "600",
-    fontSize: 13,
-  },
-  chipTextSelected: {
-    color: "#ffffff",
-  },
-  loadingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginTop: 8,
-  },
-  loadingText: {
-    color: "#6b7280",
-    fontSize: 13,
-  },
-  errorText: {
-    color: "#dc2626",
-    marginTop: 8,
-  },
-  suggestionCard: {
-    backgroundColor: "#f9fafb",
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 12,
-  },
-  suggestionName: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#111827",
-  },
-  suggestionSetsReps: {
-    fontSize: 13,
-    color: "#4f46e5",
-    fontWeight: "600",
-    marginTop: 2,
-  },
-  suggestionLabel: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#6b7280",
-    textTransform: "uppercase",
-    marginTop: 10,
-  },
-  suggestionBody: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: "#111827",
-    marginTop: 2,
-  },
-});
+const createStyles = (t: Theme) =>
+  StyleSheet.create({
+    flex: {
+      flex: 1,
+    },
+    container: {
+      padding: 20,
+      paddingBottom: 40,
+    },
+    heading: {
+      fontSize: 20,
+      fontWeight: "700",
+      marginBottom: 4,
+      color: t.text,
+    },
+    subheading: {
+      fontSize: 13,
+      color: t.textMuted,
+      marginBottom: 16,
+    },
+    chipRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 8,
+      marginBottom: 16,
+    },
+    chip: {
+      backgroundColor: t.chip,
+      borderRadius: 999,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+    },
+    chipSelected: {
+      backgroundColor: t.primarySolid,
+    },
+    chipText: {
+      color: t.textSecondary,
+      fontWeight: "600",
+      fontSize: 13,
+    },
+    chipTextSelected: {
+      color: t.onAccent,
+    },
+    loadingRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      marginTop: 8,
+    },
+    loadingText: {
+      color: t.textMuted,
+      fontSize: 13,
+    },
+    errorText: {
+      color: t.danger,
+      marginTop: 8,
+    },
+    suggestionCard: {
+      backgroundColor: t.card,
+      borderWidth: 1,
+      borderColor: t.border,
+      borderRadius: 12,
+      padding: 16,
+      marginTop: 12,
+    },
+    suggestionName: {
+      fontSize: 16,
+      fontWeight: "700",
+      color: t.text,
+    },
+    suggestionSetsReps: {
+      fontSize: 13,
+      color: t.primary,
+      fontWeight: "600",
+      marginTop: 2,
+    },
+    suggestionLabel: {
+      fontSize: 12,
+      fontWeight: "700",
+      color: t.textMuted,
+      textTransform: "uppercase",
+      marginTop: 10,
+    },
+    suggestionBody: {
+      fontSize: 14,
+      lineHeight: 20,
+      color: t.text,
+      marginTop: 2,
+    },
+  });

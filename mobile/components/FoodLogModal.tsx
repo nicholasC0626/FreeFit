@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -12,16 +12,22 @@ import {
   View,
 } from "react-native";
 
+import BarcodeScannerModal from "./BarcodeScannerModal";
+import { useTheme, type Theme } from "../constants/theme";
 import {
   createFoodLog,
   deleteFoodLog,
   searchFoods,
   updateFoodLog,
+  type BarcodeFood,
   type FoodLog,
   type FoodSearchResult,
   type MealType,
 } from "../services/nutrition.service";
 import { getApiErrorMessage } from "../utils/api-error";
+
+// expo-camera barcode scanning has no web implementation.
+const CAN_SCAN = Platform.OS !== "web";
 
 type Props = {
   visible: boolean;
@@ -58,6 +64,8 @@ export default function FoodLogModal({
   onClose,
   onSaved,
 }: Props) {
+  const t = useTheme();
+  const styles = useMemo(() => createStyles(t), [t]);
   const [foodName, setFoodName] = useState("");
   const [brand, setBrand] = useState("");
   const [servingSize, setServingSize] = useState("");
@@ -73,6 +81,8 @@ export default function FoodLogModal({
   const [searchResults, setSearchResults] = useState<FoodSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [barcode, setBarcode] = useState<string | null>(null);
+  const [scannerVisible, setScannerVisible] = useState(false);
 
   useEffect(() => {
     if (!visible) {
@@ -101,6 +111,8 @@ export default function FoodLogModal({
     setSearchQuery("");
     setSearchResults([]);
     setSearchError(null);
+    setBarcode(null);
+    setScannerVisible(false);
   }, [visible, editingLog]);
 
   const handleSearch = async () => {
@@ -133,8 +145,24 @@ export default function FoodLogModal({
     setProtein(String(result.protein));
     setCarbs(String(result.carbs));
     setFat(String(result.fat));
+    setBarcode(null);
     setSearchResults([]);
     setSearchQuery("");
+  };
+
+  const applyBarcodeFood = (food: BarcodeFood) => {
+    setFoodName(food.description);
+    setBrand(food.brand ?? "");
+    setServingSize(food.servingSize);
+    setServings("1");
+    setCalories(String(food.calories));
+    setProtein(String(food.protein));
+    setCarbs(String(food.carbs));
+    setFat(String(food.fat));
+    setBarcode(food.barcode);
+    setSearchResults([]);
+    setSearchQuery("");
+    setScannerVisible(false);
   };
 
   const handleSave = async () => {
@@ -167,6 +195,7 @@ export default function FoodLogModal({
       mealType,
       foodName: trimmedName,
       ...(brand.trim() ? { brand: brand.trim() } : {}),
+      ...(barcode ? { barcode } : {}),
       servingSize: trimmedServingSize,
       servings: servingsNum,
       calories: Math.round(caloriesNum),
@@ -231,6 +260,7 @@ export default function FoodLogModal({
                     value={searchQuery}
                     onChangeText={setSearchQuery}
                     placeholder="Search foods (e.g. chicken breast)"
+                    placeholderTextColor={t.textFaint}
                     editable={!busy && !isSearching}
                     onSubmitEditing={() => void handleSearch()}
                     returnKeyType="search"
@@ -241,12 +271,21 @@ export default function FoodLogModal({
                     disabled={busy || isSearching}
                   >
                     {isSearching ? (
-                      <ActivityIndicator color="#ffffff" size="small" />
+                      <ActivityIndicator color={t.onAccent} size="small" />
                     ) : (
                       <Text style={styles.searchButtonText}>Search</Text>
                     )}
                   </Pressable>
                 </View>
+                {CAN_SCAN ? (
+                  <Pressable
+                    style={styles.scanButton}
+                    onPress={() => setScannerVisible(true)}
+                    disabled={busy || isSearching}
+                  >
+                    <Text style={styles.scanButtonText}>Scan barcode</Text>
+                  </Pressable>
+                ) : null}
                 {searchError ? <Text style={styles.searchErrorText}>{searchError}</Text> : null}
                 {searchResults.slice(0, 10).map((result) => (
                   <Pressable
@@ -276,6 +315,7 @@ export default function FoodLogModal({
               value={foodName}
               onChangeText={setFoodName}
               placeholder="e.g. Grilled chicken"
+              placeholderTextColor={t.textFaint}
               editable={!busy}
             />
 
@@ -285,6 +325,7 @@ export default function FoodLogModal({
               value={brand}
               onChangeText={setBrand}
               placeholder="e.g. Kirkland"
+              placeholderTextColor={t.textFaint}
               editable={!busy}
             />
 
@@ -296,6 +337,7 @@ export default function FoodLogModal({
                   value={servingSize}
                   onChangeText={setServingSize}
                   placeholder="e.g. 1 cup"
+                  placeholderTextColor={t.textFaint}
                   editable={!busy}
                 />
               </View>
@@ -320,6 +362,7 @@ export default function FoodLogModal({
                   onChangeText={setCalories}
                   keyboardType="number-pad"
                   placeholder="0"
+                  placeholderTextColor={t.textFaint}
                   editable={!busy}
                 />
               </View>
@@ -331,6 +374,7 @@ export default function FoodLogModal({
                   onChangeText={setProtein}
                   keyboardType="decimal-pad"
                   placeholder="0"
+                  placeholderTextColor={t.textFaint}
                   editable={!busy}
                 />
               </View>
@@ -345,6 +389,7 @@ export default function FoodLogModal({
                   onChangeText={setCarbs}
                   keyboardType="decimal-pad"
                   placeholder="0"
+                  placeholderTextColor={t.textFaint}
                   editable={!busy}
                 />
               </View>
@@ -356,6 +401,7 @@ export default function FoodLogModal({
                   onChangeText={setFat}
                   keyboardType="decimal-pad"
                   placeholder="0"
+                  placeholderTextColor={t.textFaint}
                   editable={!busy}
                 />
               </View>
@@ -367,7 +413,7 @@ export default function FoodLogModal({
               disabled={busy}
             >
               {isSaving ? (
-                <ActivityIndicator color="#ffffff" />
+                <ActivityIndicator color={t.onAccent} />
               ) : (
                 <Text style={styles.saveButtonText}>{editingLog ? "Save changes" : "Add food"}</Text>
               )}
@@ -380,7 +426,7 @@ export default function FoodLogModal({
                 disabled={busy}
               >
                 {isDeleting ? (
-                  <ActivityIndicator color="#dc2626" />
+                  <ActivityIndicator color={t.danger} />
                 ) : (
                   <Text style={styles.deleteButtonText}>Delete entry</Text>
                 )}
@@ -392,146 +438,172 @@ export default function FoodLogModal({
             </Pressable>
           </ScrollView>
         </View>
+
+        {CAN_SCAN ? (
+          <BarcodeScannerModal
+            visible={scannerVisible}
+            onClose={() => setScannerVisible(false)}
+            onFound={applyBarcodeFood}
+          />
+        ) : null}
       </KeyboardAvoidingView>
     </Modal>
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
-    justifyContent: "flex-end",
-  },
-  sheet: {
-    backgroundColor: "#ffffff",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    maxHeight: "90%",
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "700",
-    marginBottom: 12,
-  },
-  errorText: {
-    color: "#dc2626",
-    marginBottom: 8,
-  },
-  label: {
-    fontWeight: "600",
-    fontSize: 13,
-    marginBottom: 4,
-    marginTop: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  row: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  rowItem: {
-    flex: 1,
-  },
-  saveButton: {
-    backgroundColor: "#111827",
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: "center",
-    marginTop: 20,
-  },
-  saveButtonText: {
-    color: "#ffffff",
-    fontWeight: "700",
-  },
-  deleteButton: {
-    borderWidth: 1,
-    borderColor: "#dc2626",
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: "center",
-    marginTop: 12,
-  },
-  deleteButtonText: {
-    color: "#dc2626",
-    fontWeight: "700",
-  },
-  cancelButton: {
-    paddingVertical: 14,
-    alignItems: "center",
-    marginTop: 4,
-  },
-  cancelButtonText: {
-    color: "#6b7280",
-    fontWeight: "600",
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  searchSection: {
-    marginBottom: 4,
-  },
-  searchRow: {
-    flexDirection: "row",
-    gap: 8,
-    alignItems: "center",
-  },
-  searchInput: {
-    flex: 1,
-  },
-  searchButton: {
-    backgroundColor: "#4f46e5",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-  },
-  searchButtonText: {
-    color: "#ffffff",
-    fontWeight: "700",
-    fontSize: 13,
-  },
-  searchErrorText: {
-    color: "#b45309",
-    fontSize: 12,
-    marginTop: 6,
-  },
-  searchResult: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    backgroundColor: "#f9fafb",
-    borderRadius: 10,
-    marginTop: 6,
-  },
-  searchResultInfo: {
-    flex: 1,
-    paddingRight: 8,
-  },
-  searchResultName: {
-    fontWeight: "600",
-    fontSize: 13,
-  },
-  searchResultMeta: {
-    color: "#6b7280",
-    fontSize: 11,
-    marginTop: 1,
-  },
-  searchResultCalories: {
-    fontWeight: "700",
-    fontSize: 13,
-    color: "#4f46e5",
-  },
-  orText: {
-    color: "#9ca3af",
-    fontSize: 12,
-    marginTop: 10,
-  },
-});
+const createStyles = (t: Theme) =>
+  StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: "rgba(0, 0, 0, 0.4)",
+      justifyContent: "flex-end",
+    },
+    sheet: {
+      backgroundColor: t.background,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      padding: 20,
+      maxHeight: "90%",
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: "700",
+      marginBottom: 12,
+      color: t.text,
+    },
+    errorText: {
+      color: t.danger,
+      marginBottom: 8,
+    },
+    label: {
+      fontWeight: "600",
+      fontSize: 13,
+      marginBottom: 4,
+      marginTop: 8,
+      color: t.text,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: t.inputBorder,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      color: t.text,
+    },
+    row: {
+      flexDirection: "row",
+      gap: 12,
+    },
+    rowItem: {
+      flex: 1,
+    },
+    saveButton: {
+      backgroundColor: t.cta,
+      borderRadius: 12,
+      paddingVertical: 14,
+      alignItems: "center",
+      marginTop: 20,
+    },
+    saveButtonText: {
+      color: t.onAccent,
+      fontWeight: "700",
+    },
+    deleteButton: {
+      borderWidth: 1,
+      borderColor: t.danger,
+      borderRadius: 12,
+      paddingVertical: 14,
+      alignItems: "center",
+      marginTop: 12,
+    },
+    deleteButtonText: {
+      color: t.danger,
+      fontWeight: "700",
+    },
+    cancelButton: {
+      paddingVertical: 14,
+      alignItems: "center",
+      marginTop: 4,
+    },
+    cancelButtonText: {
+      color: t.textMuted,
+      fontWeight: "600",
+    },
+    buttonDisabled: {
+      opacity: 0.6,
+    },
+    searchSection: {
+      marginBottom: 4,
+    },
+    searchRow: {
+      flexDirection: "row",
+      gap: 8,
+      alignItems: "center",
+    },
+    searchInput: {
+      flex: 1,
+    },
+    searchButton: {
+      backgroundColor: t.primarySolid,
+      borderRadius: 10,
+      paddingHorizontal: 14,
+      paddingVertical: 11,
+    },
+    searchButtonText: {
+      color: t.onAccent,
+      fontWeight: "700",
+      fontSize: 13,
+    },
+    scanButton: {
+      borderWidth: 1,
+      borderColor: t.primary,
+      borderRadius: 10,
+      paddingVertical: 9,
+      alignItems: "center",
+      marginTop: 8,
+    },
+    scanButtonText: {
+      color: t.primary,
+      fontWeight: "700",
+      fontSize: 13,
+    },
+    searchErrorText: {
+      color: t.warn,
+      fontSize: 12,
+      marginTop: 6,
+    },
+    searchResult: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingVertical: 8,
+      paddingHorizontal: 10,
+      backgroundColor: t.card,
+      borderRadius: 10,
+      marginTop: 6,
+    },
+    searchResultInfo: {
+      flex: 1,
+      paddingRight: 8,
+    },
+    searchResultName: {
+      fontWeight: "600",
+      fontSize: 13,
+      color: t.text,
+    },
+    searchResultMeta: {
+      color: t.textMuted,
+      fontSize: 11,
+      marginTop: 1,
+    },
+    searchResultCalories: {
+      fontWeight: "700",
+      fontSize: 13,
+      color: t.primary,
+    },
+    orText: {
+      color: t.textFaint,
+      fontSize: 12,
+      marginTop: 10,
+    },
+  });

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useFocusEffect, useRouter } from "expo-router";
 import {
   ActivityIndicator,
@@ -13,6 +13,7 @@ import {
 } from "react-native";
 
 import ErrorBanner from "../../components/ErrorBanner";
+import { useTheme, type Theme } from "../../constants/theme";
 import {
   deleteProgram,
   listPrograms,
@@ -39,6 +40,8 @@ const confirmDelete = (programName: string, onConfirm: () => void) => {
 
 export default function TrainingScreen() {
   const router = useRouter();
+  const t = useTheme();
+  const styles = useMemo(() => createStyles(t), [t]);
   const [programs, setPrograms] = useState<Program[]>([]);
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -73,14 +76,14 @@ export default function TrainingScreen() {
 
   const handleStartWorkout = async (workoutTemplateId?: string) => {
     if (activeSession) {
-      router.push({ pathname: "/training/active-workout", params: { id: activeSession.id } });
+      router.navigate({ pathname: "/training/active-workout", params: { id: activeSession.id } });
       return;
     }
     setStartingTemplateId(workoutTemplateId ?? "blank");
     setError(null);
     try {
       const session = await startSession(workoutTemplateId);
-      router.push({ pathname: "/training/active-workout", params: { id: session.id } });
+      router.navigate({ pathname: "/training/active-workout", params: { id: session.id } });
     } catch (err) {
       setError(getApiErrorMessage(err, "Could not start the workout."));
     } finally {
@@ -104,7 +107,7 @@ export default function TrainingScreen() {
   if (isLoading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color={t.primary} />
       </View>
     );
   }
@@ -116,7 +119,12 @@ export default function TrainingScreen() {
         <RefreshControl refreshing={isRefreshing} onRefresh={() => void loadData(true)} />
       }
     >
-      <Text style={styles.title}>Training</Text>
+      <View style={styles.titleRow}>
+        <Text style={styles.title}>Training</Text>
+        <Pressable onPress={() => router.navigate("/training/progress")}>
+          <Text style={styles.linkText}>Progress charts</Text>
+        </Pressable>
+      </View>
 
       {error ? <ErrorBanner message={error} onRetry={() => void loadData()} /> : null}
 
@@ -124,7 +132,7 @@ export default function TrainingScreen() {
         <Pressable
           style={styles.activeBanner}
           onPress={() =>
-            router.push({ pathname: "/training/active-workout", params: { id: activeSession.id } })
+            router.navigate({ pathname: "/training/active-workout", params: { id: activeSession.id } })
           }
         >
           <Text style={styles.activeBannerTitle}>Workout in progress</Text>
@@ -136,7 +144,7 @@ export default function TrainingScreen() {
 
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Programs</Text>
-        <Pressable onPress={() => router.push("/training/program-editor")}>
+        <Pressable onPress={() => router.navigate("/training/program-editor")}>
           <Text style={styles.linkText}>+ New program</Text>
         </Pressable>
       </View>
@@ -176,7 +184,7 @@ export default function TrainingScreen() {
                   disabled={startingTemplateId !== null}
                 >
                   {startingTemplateId === workout.id ? (
-                    <ActivityIndicator color="#ffffff" size="small" />
+                    <ActivityIndicator color={t.onAccent} size="small" />
                   ) : (
                     <Text style={styles.startButtonText}>Start</Text>
                   )}
@@ -193,7 +201,7 @@ export default function TrainingScreen() {
         disabled={startingTemplateId !== null}
       >
         {startingTemplateId === "blank" ? (
-          <ActivityIndicator color="#4f46e5" size="small" />
+          <ActivityIndicator color={t.primary} size="small" />
         ) : (
           <Text style={styles.blankButtonText}>Start blank workout</Text>
         )}
@@ -230,141 +238,151 @@ export default function TrainingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  container: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: "700",
-    marginBottom: 16,
-  },
-  errorText: {
-    color: "#dc2626",
-    marginBottom: 12,
-  },
-  activeBanner: {
-    backgroundColor: "#065f46",
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 16,
-  },
-  activeBannerTitle: {
-    color: "#ffffff",
-    fontWeight: "700",
-    fontSize: 15,
-  },
-  activeBannerSub: {
-    color: "#a7f3d0",
-    fontSize: 13,
-    marginTop: 2,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  historyTitle: {
-    marginTop: 24,
-    marginBottom: 10,
-  },
-  linkText: {
-    color: "#4f46e5",
-    fontWeight: "700",
-  },
-  emptyCard: {
-    backgroundColor: "#f9fafb",
-    borderRadius: 14,
-    padding: 16,
-  },
-  emptyText: {
-    color: "#6b7280",
-  },
-  programCard: {
-    backgroundColor: "#f9fafb",
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 12,
-  },
-  programHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  programInfo: {
-    flex: 1,
-    paddingRight: 8,
-  },
-  programName: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  programDescription: {
-    color: "#6b7280",
-    fontSize: 13,
-    marginTop: 2,
-  },
-  deleteText: {
-    color: "#dc2626",
-    fontWeight: "600",
-    fontSize: 13,
-  },
-  workoutRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#e5e7eb",
-  },
-  workoutInfo: {
-    flex: 1,
-  },
-  workoutName: {
-    fontWeight: "600",
-  },
-  workoutMeta: {
-    color: "#6b7280",
-    fontSize: 12,
-    marginTop: 2,
-  },
-  startButton: {
-    backgroundColor: "#111827",
-    borderRadius: 10,
-    paddingHorizontal: 18,
-    paddingVertical: 8,
-  },
-  startButtonText: {
-    color: "#ffffff",
-    fontWeight: "700",
-  },
-  blankButton: {
-    borderWidth: 1,
-    borderColor: "#4f46e5",
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: "center",
-    marginTop: 4,
-  },
-  blankButtonText: {
-    color: "#4f46e5",
-    fontWeight: "700",
-  },
-  sessionRow: {
-    backgroundColor: "#f9fafb",
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 8,
-  },
-});
+const createStyles = (t: Theme) =>
+  StyleSheet.create({
+    centered: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    container: {
+      padding: 20,
+      paddingBottom: 40,
+    },
+    titleRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 16,
+    },
+    title: {
+      fontSize: 26,
+      fontWeight: "700",
+      color: t.text,
+    },
+    errorText: {
+      color: t.danger,
+      marginBottom: 12,
+    },
+    activeBanner: {
+      backgroundColor: t.successBg,
+      borderRadius: 14,
+      padding: 16,
+      marginBottom: 16,
+    },
+    activeBannerTitle: {
+      color: t.successText,
+      fontWeight: "700",
+      fontSize: 15,
+    },
+    activeBannerSub: {
+      color: t.successMuted,
+      fontSize: 13,
+      marginTop: 2,
+    },
+    sectionHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 10,
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: "700",
+      color: t.text,
+    },
+    historyTitle: {
+      marginTop: 24,
+      marginBottom: 10,
+    },
+    linkText: {
+      color: t.primary,
+      fontWeight: "700",
+    },
+    emptyCard: {
+      backgroundColor: t.card,
+      borderRadius: 14,
+      padding: 16,
+    },
+    emptyText: {
+      color: t.textMuted,
+    },
+    programCard: {
+      backgroundColor: t.card,
+      borderRadius: 14,
+      padding: 16,
+      marginBottom: 12,
+    },
+    programHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginBottom: 8,
+    },
+    programInfo: {
+      flex: 1,
+      paddingRight: 8,
+    },
+    programName: {
+      fontSize: 16,
+      fontWeight: "700",
+      color: t.text,
+    },
+    programDescription: {
+      color: t.textMuted,
+      fontSize: 13,
+      marginTop: 2,
+    },
+    deleteText: {
+      color: t.danger,
+      fontWeight: "600",
+      fontSize: 13,
+    },
+    workoutRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingVertical: 10,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: t.border,
+    },
+    workoutInfo: {
+      flex: 1,
+    },
+    workoutName: {
+      fontWeight: "600",
+      color: t.text,
+    },
+    workoutMeta: {
+      color: t.textMuted,
+      fontSize: 12,
+      marginTop: 2,
+    },
+    startButton: {
+      backgroundColor: t.cta,
+      borderRadius: 10,
+      paddingHorizontal: 18,
+      paddingVertical: 8,
+    },
+    startButtonText: {
+      color: t.onAccent,
+      fontWeight: "700",
+    },
+    blankButton: {
+      borderWidth: 1,
+      borderColor: t.primary,
+      borderRadius: 12,
+      paddingVertical: 12,
+      alignItems: "center",
+      marginTop: 4,
+    },
+    blankButtonText: {
+      color: t.primary,
+      fontWeight: "700",
+    },
+    sessionRow: {
+      backgroundColor: t.card,
+      borderRadius: 12,
+      padding: 14,
+      marginBottom: 8,
+    },
+  });

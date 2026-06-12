@@ -1,4 +1,7 @@
+import { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+
+import { useTheme, type Theme } from "../constants/theme";
 
 type ErrorBannerProps = {
   message: string;
@@ -6,6 +9,9 @@ type ErrorBannerProps = {
 };
 
 export default function ErrorBanner({ message, onRetry }: ErrorBannerProps) {
+  const t = useTheme();
+  const styles = useMemo(() => createStyles(t), [t]);
+
   return (
     <View style={styles.banner}>
       <Text style={styles.message}>{message}</Text>
@@ -18,32 +24,33 @@ export default function ErrorBanner({ message, onRetry }: ErrorBannerProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  banner: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fef2f2",
-    borderWidth: 1,
-    borderColor: "#fecaca",
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-  },
-  message: {
-    flex: 1,
-    color: "#dc2626",
-    fontSize: 13,
-    paddingRight: 8,
-  },
-  retryButton: {
-    backgroundColor: "#dc2626",
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-  },
-  retryText: {
-    color: "#ffffff",
-    fontWeight: "700",
-    fontSize: 13,
-  },
-});
+const createStyles = (t: Theme) =>
+  StyleSheet.create({
+    banner: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: t.dangerBg,
+      borderWidth: 1,
+      borderColor: t.dangerBorder,
+      borderRadius: 12,
+      padding: 12,
+      marginBottom: 12,
+    },
+    message: {
+      flex: 1,
+      color: t.danger,
+      fontSize: 13,
+      paddingRight: 8,
+    },
+    retryButton: {
+      backgroundColor: t.dangerSolid,
+      borderRadius: 8,
+      paddingHorizontal: 14,
+      paddingVertical: 7,
+    },
+    retryText: {
+      color: t.onAccent,
+      fontWeight: "700",
+      fontSize: 13,
+    },
+  });

@@ -7,7 +7,9 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '../components/useColorScheme';
+import { darkTheme, lightTheme } from '../constants/theme';
 import { useAuthStore } from '../stores/auth.store';
+import { useThemeStore } from '../stores/theme.store';
 import { getProfile } from '../services/user.service';
 
 export {
@@ -39,6 +41,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     useAuthStore.getState().hydrate();
+    void useThemeStore.getState().hydrate();
   }, []);
 
   if (!loaded) {
@@ -50,15 +53,29 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const t = isDark ? darkTheme : lightTheme;
+  const navTheme = {
+    ...(isDark ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(isDark ? DarkTheme : DefaultTheme).colors,
+      primary: t.primary,
+      background: t.background,
+      card: t.background,
+      text: t.text,
+      border: t.border,
+    },
+  };
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={navTheme}>
       <Stack>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
         <Stack.Screen name="training/program-editor" options={{ title: 'New Program' }} />
         <Stack.Screen name="training/active-workout" options={{ title: 'Workout' }} />
+        <Stack.Screen name="training/progress" options={{ title: 'Progress' }} />
         <Stack.Screen name="ai/program-review" options={{ title: 'Program Review' }} />
         <Stack.Screen name="ai/exercise-suggest" options={{ title: 'Exercise Ideas' }} />
         <Stack.Screen name="nutrition/meal-plan" options={{ title: 'Meal Ideas' }} />

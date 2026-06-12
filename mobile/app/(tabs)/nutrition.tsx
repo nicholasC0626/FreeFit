@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useFocusEffect, useRouter } from "expo-router";
 import {
   ActivityIndicator,
@@ -12,6 +12,7 @@ import {
 
 import ErrorBanner from "../../components/ErrorBanner";
 import FoodLogModal from "../../components/FoodLogModal";
+import { useTheme, type Theme } from "../../constants/theme";
 import {
   getDailySummary,
   getFoodLogs,
@@ -57,6 +58,11 @@ const formatDateLabel = (date: string): string => {
   });
 };
 
+const useStyles = () => {
+  const t = useTheme();
+  return useMemo(() => createStyles(t), [t]);
+};
+
 type MacroRowProps = {
   label: string;
   consumed: number;
@@ -66,6 +72,7 @@ type MacroRowProps = {
 };
 
 function MacroRow({ label, consumed, target, unit, color }: MacroRowProps) {
+  const styles = useStyles();
   const progress = target && target > 0 ? Math.min(consumed / target, 1) : 0;
 
   return (
@@ -85,6 +92,7 @@ function MacroRow({ label, consumed, target, unit, color }: MacroRowProps) {
 }
 
 function FoodLogRow({ log, onPress }: { log: FoodLog; onPress: () => void }) {
+  const styles = useStyles();
   return (
     <Pressable style={styles.foodRow} onPress={onPress}>
       <View style={styles.foodInfo}>
@@ -106,6 +114,8 @@ function FoodLogRow({ log, onPress }: { log: FoodLog; onPress: () => void }) {
 
 export default function NutritionScreen() {
   const router = useRouter();
+  const t = useTheme();
+  const styles = useStyles();
   const [summary, setSummary] = useState<DailySummary | null>(null);
   const [logs, setLogs] = useState<FoodLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -157,7 +167,7 @@ export default function NutritionScreen() {
   if (isLoading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color={t.primary} />
       </View>
     );
   }
@@ -231,13 +241,13 @@ export default function NutritionScreen() {
           </View>
 
           <View style={styles.toolRow}>
-            <Pressable style={styles.toolButton} onPress={() => router.push("/nutrition/meal-plan")}>
+            <Pressable style={styles.toolButton} onPress={() => router.navigate("/nutrition/meal-plan")}>
               <Text style={styles.toolButtonText}>Meal ideas</Text>
             </Pressable>
-            <Pressable style={styles.toolButton} onPress={() => router.push("/nutrition/fast-food")}>
+            <Pressable style={styles.toolButton} onPress={() => router.navigate("/nutrition/fast-food")}>
               <Text style={styles.toolButtonText}>Fast food</Text>
             </Pressable>
-            <Pressable style={styles.toolButton} onPress={() => router.push("/nutrition/grocery-list")}>
+            <Pressable style={styles.toolButton} onPress={() => router.navigate("/nutrition/grocery-list")}>
               <Text style={styles.toolButtonText}>Groceries</Text>
             </Pressable>
           </View>
@@ -287,182 +297,188 @@ export default function NutritionScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  container: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: "700",
-  },
-  dateText: {
-    color: "#6b7280",
-  },
-  dateNav: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 16,
-  },
-  dateCenter: {
-    alignItems: "center",
-  },
-  dateArrow: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#f3f4f6",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  dateArrowDisabled: {
-    opacity: 0.3,
-  },
-  dateArrowText: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#374151",
-  },
-  errorText: {
-    color: "#dc2626",
-    marginBottom: 12,
-  },
-  calorieCard: {
-    backgroundColor: "#111827",
-    borderRadius: 16,
-    padding: 24,
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  calorieNumber: {
-    color: "#ffffff",
-    fontSize: 44,
-    fontWeight: "800",
-  },
-  calorieLabel: {
-    color: "#9ca3af",
-    fontSize: 14,
-    marginTop: 2,
-  },
-  calorieSub: {
-    color: "#6b7280",
-    fontSize: 13,
-    marginTop: 8,
-  },
-  macroCard: {
-    backgroundColor: "#f9fafb",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    marginBottom: 12,
-  },
-  macroRow: {
-    marginBottom: 12,
-  },
-  macroHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 4,
-  },
-  macroLabel: {
-    fontWeight: "600",
-  },
-  macroValue: {
-    color: "#6b7280",
-  },
-  progressTrack: {
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#e5e7eb",
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: 8,
-    borderRadius: 4,
-  },
-  toolRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 16,
-  },
-  toolButton: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: "#4f46e5",
-    borderRadius: 10,
-    paddingVertical: 9,
-    alignItems: "center",
-  },
-  toolButtonText: {
-    color: "#4f46e5",
-    fontWeight: "700",
-    fontSize: 13,
-  },
-  mealCard: {
-    backgroundColor: "#f9fafb",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-  },
-  mealHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  mealCalories: {
-    color: "#6b7280",
-    fontWeight: "600",
-  },
-  emptyMealText: {
-    color: "#9ca3af",
-    fontSize: 13,
-  },
-  foodRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 8,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#e5e7eb",
-  },
-  foodInfo: {
-    flex: 1,
-    paddingRight: 8,
-  },
-  foodName: {
-    fontWeight: "600",
-  },
-  foodMeta: {
-    color: "#6b7280",
-    fontSize: 12,
-    marginTop: 2,
-  },
-  foodMacros: {
-    alignItems: "flex-end",
-  },
-  foodCalories: {
-    fontWeight: "600",
-  },
-  addButton: {
-    marginTop: 10,
-    paddingVertical: 8,
-    alignItems: "center",
-    borderRadius: 10,
-    backgroundColor: "#eef2ff",
-  },
-  addButtonText: {
-    color: "#4f46e5",
-    fontWeight: "700",
-    fontSize: 13,
-  },
-});
+const createStyles = (t: Theme) =>
+  StyleSheet.create({
+    centered: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    container: {
+      padding: 20,
+      paddingBottom: 40,
+    },
+    title: {
+      fontSize: 26,
+      fontWeight: "700",
+      color: t.text,
+    },
+    dateText: {
+      color: t.textMuted,
+    },
+    dateNav: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 16,
+    },
+    dateCenter: {
+      alignItems: "center",
+    },
+    dateArrow: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: t.chip,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    dateArrowDisabled: {
+      opacity: 0.3,
+    },
+    dateArrowText: {
+      fontSize: 18,
+      fontWeight: "700",
+      color: t.textSecondary,
+    },
+    errorText: {
+      color: t.danger,
+      marginBottom: 12,
+    },
+    calorieCard: {
+      backgroundColor: t.hero,
+      borderRadius: 16,
+      padding: 24,
+      alignItems: "center",
+      marginBottom: 16,
+    },
+    calorieNumber: {
+      color: t.heroText,
+      fontSize: 44,
+      fontWeight: "800",
+    },
+    calorieLabel: {
+      color: t.heroMuted,
+      fontSize: 14,
+      marginTop: 2,
+    },
+    calorieSub: {
+      color: t.heroFaint,
+      fontSize: 13,
+      marginTop: 8,
+    },
+    macroCard: {
+      backgroundColor: t.card,
+      borderRadius: 16,
+      padding: 16,
+      marginBottom: 16,
+    },
+    cardTitle: {
+      fontSize: 16,
+      fontWeight: "700",
+      marginBottom: 12,
+      color: t.text,
+    },
+    macroRow: {
+      marginBottom: 12,
+    },
+    macroHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginBottom: 4,
+    },
+    macroLabel: {
+      fontWeight: "600",
+      color: t.text,
+    },
+    macroValue: {
+      color: t.textMuted,
+    },
+    progressTrack: {
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: t.border,
+      overflow: "hidden",
+    },
+    progressFill: {
+      height: 8,
+      borderRadius: 4,
+    },
+    toolRow: {
+      flexDirection: "row",
+      gap: 8,
+      marginBottom: 16,
+    },
+    toolButton: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: t.primary,
+      borderRadius: 10,
+      paddingVertical: 9,
+      alignItems: "center",
+    },
+    toolButtonText: {
+      color: t.primary,
+      fontWeight: "700",
+      fontSize: 13,
+    },
+    mealCard: {
+      backgroundColor: t.card,
+      borderRadius: 16,
+      padding: 16,
+      marginBottom: 12,
+    },
+    mealHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 8,
+    },
+    mealCalories: {
+      color: t.textMuted,
+      fontWeight: "600",
+    },
+    emptyMealText: {
+      color: t.textFaint,
+      fontSize: 13,
+    },
+    foodRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingVertical: 8,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: t.border,
+    },
+    foodInfo: {
+      flex: 1,
+      paddingRight: 8,
+    },
+    foodName: {
+      fontWeight: "600",
+      color: t.text,
+    },
+    foodMeta: {
+      color: t.textMuted,
+      fontSize: 12,
+      marginTop: 2,
+    },
+    foodMacros: {
+      alignItems: "flex-end",
+    },
+    foodCalories: {
+      fontWeight: "600",
+      color: t.text,
+    },
+    addButton: {
+      marginTop: 10,
+      paddingVertical: 8,
+      alignItems: "center",
+      borderRadius: 10,
+      backgroundColor: t.primaryTint,
+    },
+    addButtonText: {
+      color: t.primary,
+      fontWeight: "700",
+      fontSize: 13,
+    },
+  });

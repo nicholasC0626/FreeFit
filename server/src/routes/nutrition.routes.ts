@@ -1,6 +1,7 @@
 import { Router } from "express";
 
 import {
+  barcodeLookupHandler,
   createLogHandler,
   deleteLogHandler,
   getFastFoodHandler,
@@ -24,6 +25,7 @@ const nutritionRouter = Router();
 nutritionRouter.use(requireAuth);
 nutritionRouter.get("/summary", getSummaryHandler);
 nutritionRouter.get("/search", searchFoodsHandler);
+nutritionRouter.get("/barcode/:code", barcodeLookupHandler);
 nutritionRouter.get("/suggestions", getSuggestionsHandler);
 nutritionRouter.get("/fast-food", getFastFoodHandler);
 nutritionRouter.post("/grocery-list", validateBody(groceryListSchema), groceryListHandler);
