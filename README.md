@@ -1,18 +1,102 @@
 # FreeFit
 
-Full-stack fitness app: nutrition tracking with barcode scanning, progressive-overload training log, AI trainer (Gemini), whole-food meal suggestions, and smart push notifications.
+[![CI](https://github.com/nicholasC0626/FreeFit/actions/workflows/ci.yml/badge.svg)](https://github.com/nicholasC0626/FreeFit/actions/workflows/ci.yml)
 
-- `mobile/` — React Native + Expo (SDK 54), Expo Router, Zustand
-- `server/` — Node.js + Express + Prisma + PostgreSQL
+**A full-stack fitness app that replaces a paid stack of MyFitnessPal + a workout logger + a personal trainer — built from scratch with React Native and Node.js.**
 
-## Local development
+FreeFit combines macro-based nutrition tracking, a progressive-overload training log, and an AI coach (Google Gemini) in one mobile app, backed by a typed REST API with a PostgreSQL database, automated tests, CI, and a containerized deployment.
+
+<!-- TODO: add screenshots — e.g. a row of 3-4 phone captures (nutrition dashboard, barcode scanner, progress charts, AI trainer) -->
+
+---
+
+## Features
+
+### 🍎 Nutrition tracking
+- **Personalized daily targets** — calories and protein/carbs/fat computed from the user's age, sex, height, weight, activity level, and goal (BMR → TDEE with activity multipliers, goal-based surplus/deficit, protein scaled to body weight)
+- **Food logging by meal** with a live "calories remaining" dashboard and macro progress bars, browsable by day
+- **Food database search** backed by the USDA FoodData Central API (300k+ branded and whole foods), proxied server-side so API keys never ship to the client
+- **Barcode scanner** — point the camera at any package; the product is looked up on Open Food Facts (3M+ products) and its nutrition auto-fills the log
+- **Whole-food meal suggestions** sized to fit the macros you have *left* today, ranked by a custom scoring algorithm
+- **Fast-food guide** — a seeded database of restaurant items filterable by calorie cap and protein floor
+- **AI grocery lists** — Gemini generates a budget-aware, whole-foods shopping list from your macro targets and dietary restrictions
+
+### 🏋️ Training
+- **Program builder** — multi-day workout programs with per-exercise set and rep-range targets
+- **Live workout sessions** — log sets (weight × reps) as you train, resume in-progress workouts, append unplanned exercises mid-session
+- **Automatic PR detection** — every set is checked against your all-time best for that exercise; new records trigger haptic feedback
+- **Progress charts** — per-exercise estimated 1RM trend line (Epley formula) and per-session volume bars, drawn with `react-native-svg`, plus a personal-records board
+
+### 🤖 AI trainer (Google Gemini)
+- **Chat coach** with conversation context for training and nutrition questions
+- **One-tap program generation** — builds a complete lifting program from your profile (experience, goal, gym days/week) and saves it as an editable program
+- **Program review** — the AI audits any program for muscle-group imbalances, redundancy, volume issues, and exercise ordering
+- **Exercise suggestions** — top-5 ranked exercises per muscle group with coaching cues and common mistakes
+
+### 🔔 Smart notifications
+- Cron-based scheduler (`node-cron`) sends push notifications via Expo's push service: morning workout kickoffs, follow-ups if you haven't trained, and nutrition nudges if you forget to log meals
+- Quiet-hours aware, per-user opt-in toggles, device token registration handled automatically
+
+### 📱 Product polish
+- **Dark mode** — full light/dark theming from a semantic design-token system, following the OS setting or a manual in-app toggle (persisted per device)
+- **Onboarding wizard** that builds the user's metabolic profile in four steps
+- Pull-to-refresh, optimistic toggles, empty states, and per-request error recovery throughout
+
+---
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Mobile | React Native 0.81 · Expo SDK 54 · Expo Router (file-based, typed routes) · TypeScript (strict) · Zustand |
+| API | Node.js · Express 5 · TypeScript · Zod request validation |
+| Database | PostgreSQL · Prisma ORM (migrations + seeding) |
+| AI | Google Gemini |
+| External data | USDA FoodData Central (search) · Open Food Facts (barcodes) — both proxied server-side |
+| Auth & security | JWT access + refresh tokens · bcrypt password hashing · Helmet · rate limiting |
+| Testing | Vitest — unit tests for business logic + integration tests against a real Postgres via Supertest |
+| CI/CD | GitHub Actions (tests + type-checks on every push/PR) · Docker · Railway · Expo EAS |
+
+## Architecture
+
+```
+FreeFit/
+├── mobile/                  # Expo app
+│   ├── app/                 # File-based routes: (auth), (tabs), training/, nutrition/, ai/
+│   ├── components/          # Shared UI (charts, modals, scanner)
+│   ├── constants/theme.ts   # Semantic light/dark design tokens
+│   ├── services/            # Typed API clients (axios)
+│   └── stores/              # Zustand stores (session, theme) persisted to SecureStore
+├── server/
+│   ├── src/
+│   │   ├── routes/          # Express routers per domain
+│   │   ├── controllers/     # HTTP handling + validation
+│   │   ├── services/        # Business logic (PR detection, suggestion scoring, AI prompts)
+│   │   ├── middleware/      # Auth, validation, central error handling
+│   │   └── utils/           # Pure logic (macro calculator) — unit tested
+│   ├── prisma/              # Schema, migrations, idempotent seed
+│   └── tests/               # Vitest unit + integration suites
+└── .github/workflows/ci.yml
+```
+
+Design decisions worth noting:
+
+- **All third-party API calls happen server-side** (Gemini, USDA, Open Food Facts) — the mobile app holds zero secrets, and responses are normalized into one consistent shape before reaching the client.
+- **Route protection on both ends**: Express middleware verifies JWTs per request, while the mobile root layout has a navigation guard that redirects by auth/onboarding state.
+- **PR detection is transactional** — each logged set is compared against the user's historical best inside the same request that persists it, so records are never missed or double-counted.
+- **The theme system is a single hook** — every screen builds its styles from semantic tokens (`useTheme()`), so the entire app, including navigation chrome, re-themes from one source of truth.
+- **The server boots migrations + seed on container start**, making Railway deploys fully hands-off.
+
+---
+
+## Running it locally
 
 ### Prerequisites
 - Node.js 20.19.4+ (required by React Native 0.81)
 - PostgreSQL running locally
 
 ### Backend
-1. Copy `server/.env.example` to `server/.env` and fill in `DATABASE_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET` (and `GEMINI_API_KEY` + `USDA_API_KEY` for AI/food search).
+1. Copy `server/.env.example` to `server/.env` and fill in `DATABASE_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET` (and `GEMINI_API_KEY` + `USDA_API_KEY` for AI/food search — barcode lookup needs no key).
 2. Then:
 
 ```bash
