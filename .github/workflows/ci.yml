@@ -56,5 +56,10 @@ jobs:
           cache-dependency-path: mobile/package-lock.json
       - run: npm ci
         working-directory: mobile
+      # typedRoutes (app.json) generates .expo/types/router.d.ts, which tsconfig
+      # includes. The dev server writes it; a clean checkout has none, so generate
+      # it here before typechecking.
+      - run: node scripts/generate-router-types.js
+        working-directory: mobile
       - run: npx tsc --noEmit
         working-directory: mobile
